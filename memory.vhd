@@ -10,33 +10,37 @@ use std.textio.all;
 entity memory is
     generic (
         is_instruction  : boolean; --declares if this memory hold instructions
-        element_size    : integer; --the size of each element in bits
         ram_size        : integer --the number of elements in the memory
     );
     port (
         reset           : in std_logic;
         clock           : in std_logic;
         mem_dump        : in std_logic;
-        mem_address     : in integer range 0 to ram_size-1;
+        mem_address     : in std_logic_vector (31 downto 0);
         mem_write       : in std_logic;
-        mem_write_data  : in std_logic_vector (element_size-1 downto 0);
-        mem_read_data   : out std_logic_vector (element_size-1 downto 0)
+        mem_write_data  : in std_logic_vector (31 downto 0);
+        mem_read_data   : out std_logic_vector (31 downto 0)
     );
 end memory;
 
 architecture memory_arch of memory is
 
-    type Mem is array(ram_size-1 downto 0) of std_logic_vector(element_size-1 downto 0);
+    type Mem is array(ram_size-1 downto 0) of std_logic_vector(31 downto 0);
     
-    signal ram_block: Mem;
+    signal ram_block        : Mem;
+    signal address_index    : unsigned(31 downto 0);
     
 begin
+    --The memory address to look up is provided in bytes, but we index our memory array by words
+    --so we need to divide the address by 4 to get the correct index in the memory array;
+    address_index <= shift_right(unsigned(mem_address), 2);
+    
     --main behaviors
     main_proc: process(clock)
     
         file f_in           : text;
         variable f_line     : line;
-        variable f_lineVal  : bit_vector (element_size-1 downto 0);
+        variable f_lineVal  : bit_vector (31 downto 0);
         
     begin
         if reset = '1' then
@@ -53,7 +57,7 @@ begin
                         read(f_line, f_lineVal);
                         ram_block(i) <= to_stdlogicvector(f_lineVal);
                     else
-                        ram_block(i) <= std_logic_vector(to_unsigned(0, element_size));
+                        ram_block(i) <= std_logic_vector(to_unsigned(0, 32));
                     end if;
                 end loop;
                 --close the program file
@@ -62,19 +66,21 @@ begin
             else
                 --initialize all entries to zero in main memory
                 for i in 0 to ram_size-1 loop
-                    ram_block(i) <= std_logic_vector(to_unsigned(0, element_size));
+                    ram_block(i) <= std_logic_vector(to_unsigned(0, 32));
                 end loop;
             end if;
             
         elsif rising_edge(clock) then
-        
+            
             --if writing store the word at the current address
             if mem_write = '1' then
-                ram_block(mem_address) <= mem_write_data;
+                ram_block(to_integer(address_index)) <= mem_write_data;
             end if;
             
-            --read the word at the current address
-            mem_read_data <= ram_block(mem_address);
+            --read the word at the current address if the address is valid
+            if to_integer(address_index) < ram_size then
+                mem_read_data <= ram_block(to_integer(address_index));
+            end if;
         end if;
     end process;
     
@@ -97,7 +103,7 @@ begin
             
             --write the memory contents to the file
             for i in 0 to ram_size-1 loop
-                write(f_line, to_bitvector(ram_block(i)), right, element_size-1);
+                write(f_line, to_bitvector(ram_block(i)), right, 31);
                 writeline(f_out, f_line);
             end loop;
             

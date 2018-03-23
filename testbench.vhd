@@ -14,7 +14,8 @@ architecture testbench_arch of testbench is
         port (
             reset   : in std_logic;
             clock   : in std_logic;
-            dump    : in std_logic
+            dump    : in std_logic;
+            test    : out std_logic_vector (31 downto 0)
         );
     end component;
 
@@ -22,12 +23,14 @@ architecture testbench_arch of testbench is
     signal clock: std_logic := '0';
     signal reset: std_logic := '0';
     signal dump: std_logic := '0';
+    signal test: std_logic_vector (31 downto 0) := std_logic_vector(to_unsigned(0, 32));
 
 begin
-    inst0: processor port map(
+    processor_instance: processor port map(
         clock => clock,
         reset => reset,
-        dump => dump
+        dump => dump,
+        test => test
     );
 
     --System clock
