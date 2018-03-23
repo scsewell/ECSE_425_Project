@@ -47,3 +47,8 @@ vsim.dbg
 *.mpf
 *.wlf
 work/
+
+# memory dumps
+register_file.txt
+memory.txt
+instructionMemory.txt

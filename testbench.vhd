@@ -12,19 +12,22 @@ architecture testbench_arch of testbench is
     
     component processor is
         port (
-            reset : in std_logic;
-            clock : in std_logic
+            reset   : in std_logic;
+            clock   : in std_logic;
+            dump    : in std_logic
         );
     end component;
 
     --The input signals with their initial values
     signal clock: std_logic := '0';
     signal reset: std_logic := '0';
+    signal dump: std_logic := '0';
 
 begin
     inst0: processor port map(
         clock => clock,
-        reset => reset
+        reset => reset,
+        dump => dump
     );
 
     --System clock
@@ -39,10 +42,17 @@ begin
     --Main simulation
     sim_process: process
     begin
+        --start the simulation with a reset
         reset <= '1';
-        wait for 1 * clk_period;
+        wait for clk_period;
         reset <= '0';
     
+        --at the end of the simulation dump the memory
+        wait for 9990 * clk_period;
+        dump <= '1';
+        wait for clk_period;
+        dump <= '0';
+        
         wait;
     end process sim_process;
 end;
