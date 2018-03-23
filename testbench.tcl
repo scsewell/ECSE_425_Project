@@ -8,6 +8,7 @@ vlib work
 
 ;# Compile components if any
 vcom memory.vhd
+vcom registers.vhd
 vcom processor.vhd
 vcom testbench.vhd
 
