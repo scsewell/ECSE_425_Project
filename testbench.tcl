@@ -15,14 +15,14 @@ vcom testbench.vhd
 ;# Start simulation
 vsim testbench
 
-;# Generate a clock with 1ns period
+;# Generate a clock with 1ns period (1 GHz frequency as per project specification)
 force -deposit clock 0 0 ns, 1 0.5 ns -repeat 1 ns
 
 ;# Add the waves
 AddWaves
 
-;# Run
-run 200 ns
+;# Run for 10,000 clock cycles as per project specification
+run 10000 ns
 
-;# Fit the view to the simulation
-wave zoom full
+;# Show to first few clock cycles in the window
+wave zoom range 0ns 20ns
