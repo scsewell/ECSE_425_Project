@@ -8,14 +8,12 @@ use std.textio.all;
 --things easier. Additionally, memory delay is removed, with all operations completing in one 
 --cycle.
 entity memory is
-    generic
-    (
+    generic (
         is_instruction  : boolean; --declares if this memory hold instructions
         element_size    : integer; --the size of each element in bits
         ram_size        : integer --the number of elements in the memory
     );
-    port
-    (
+    port (
         reset           : in std_logic;
         clock           : in std_logic;
         mem_dump        : in std_logic;

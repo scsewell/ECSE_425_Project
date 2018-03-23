@@ -12,22 +12,21 @@ end processor;
 
 architecture processor_arch of processor is
     
-    signal reg_write        : std_logic;
-    signal reg_write_num    : integer range 0 to 31;
-    signal reg_write_data   : std_logic_vector (31 downto 0);
-    signal reg_read_num0    : integer range 0 to 31;
-    signal reg_read_num1    : integer range 0 to 31;
-    signal reg_read_data0   : std_logic_vector (31 downto 0);
-    signal reg_read_data1   : std_logic_vector (31 downto 0);
-    
-    signal mem_address      : integer range 0 to 31;
-    signal mem_write        : std_logic;
-    signal mem_write_data   : std_logic_vector (31 downto 0);
-    signal mem_read_data    : std_logic_vector (31 downto 0);
-    
+    --import all components
+    component mux is
+        generic (
+            bus_width : integer --the number of bits in the inputs and output
+        );
+        port (
+            s   : in std_logic;
+            i0  : in std_logic_vector (bus_width-1 downto 0);
+            i1  : in std_logic_vector (bus_width-1 downto 0);
+            o   : out std_logic_vector (bus_width-1 downto 0)
+        );
+	end component;
+
 	component registers
-        generic
-        (
+        generic (
             register_size   : integer := 32; --the size of each register in bits
             register_count  : integer := 32 --the number of registers
         );
@@ -46,8 +45,7 @@ architecture processor_arch of processor is
 	end component;
     
 	component memory
-        generic
-        (
+        generic (
             is_instruction  : boolean; --declares if this memory hold instructions
             element_size    : integer; --the size of each element in bits
             ram_size        : integer --the number of elements in the memory
@@ -63,8 +61,21 @@ architecture processor_arch of processor is
 		);
 	end component;
     
-begin
+    --signal declaration
+    signal reg_write        : std_logic;
+    signal reg_write_num    : integer range 0 to 31;
+    signal reg_write_data   : std_logic_vector (31 downto 0);
+    signal reg_read_num0    : integer range 0 to 31;
+    signal reg_read_num1    : integer range 0 to 31;
+    signal reg_read_data0   : std_logic_vector (31 downto 0);
+    signal reg_read_data1   : std_logic_vector (31 downto 0);
     
+    signal mem_address      : integer range 0 to 31;
+    signal mem_write        : std_logic;
+    signal mem_write_data   : std_logic_vector (31 downto 0);
+    signal mem_read_data    : std_logic_vector (31 downto 0);
+    
+begin
     --registers:
 	regs: registers port map (
 		reset => reset,
@@ -108,4 +119,5 @@ begin
         if rising_edge(clock) then
         end if;
     end process;
+    
 end processor_arch;

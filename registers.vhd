@@ -6,8 +6,7 @@ use std.textio.all;
 --Manages access and modification of register values.
 --R0 is always zero, even after attempting to write to it. 
 entity registers is
-    generic
-    (
+    generic (
         register_size   : integer := 32; --the size of each register in bits
         register_count  : integer := 32 --the number of registers
     );
