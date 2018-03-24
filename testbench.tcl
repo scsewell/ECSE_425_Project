@@ -11,6 +11,7 @@ vlib work
 ;# Compile components if any
 vcom mux.vhd
 vcom pc.vhd
+vcom alu.vhd
 vcom memory.vhd
 vcom registers.vhd
 vcom processor.vhd

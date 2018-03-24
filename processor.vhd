@@ -36,9 +36,6 @@ architecture processor_arch of processor is
     end component;
 
     component registers
-        generic (
-            register_count  : integer := 32 --the number of registers
-        );
         port (
             reset           : in std_logic;
             clock           : in std_logic;
@@ -84,18 +81,9 @@ architecture processor_arch of processor is
     signal i_immediate      : std_logic_vector (15 downto 0);
     signal i_address        : std_logic_vector (25 downto 0);
     
-    signal reg_write        : std_logic;
-    signal reg_write_num    : std_logic_vector (4 downto 0);
-    signal reg_write_data   : std_logic_vector (31 downto 0);
-    signal reg_read_num0    : std_logic_vector (4 downto 0);
-    signal reg_read_num1    : std_logic_vector (4 downto 0);
-    signal reg_read_data0   : std_logic_vector (31 downto 0);
-    signal reg_read_data1   : std_logic_vector (31 downto 0);
-    
-    signal mem_address      : std_logic_vector (31 downto 0);
-    signal mem_write        : std_logic;
-    signal mem_write_data   : std_logic_vector (31 downto 0);
-    signal mem_read_data    : std_logic_vector (31 downto 0);
+    --register signals
+    signal r_rs   : std_logic_vector (31 downto 0);
+    signal r_rt   : std_logic_vector (31 downto 0);
     
 begin
     --program counter:
@@ -131,18 +119,18 @@ begin
     i_address <= instruction(25 downto 0);
     
     --registers:
-    --regs: registers port map (
-    --    reset => reset,
-    --    clock => clock,
-    --    reg_dump => dump,
-    --    reg_write => reg_write,
-    --    reg_write_num =>,
-    --    reg_write_data =>,
-    --    reg_read_num0 =>,
-    --    reg_read_num1 =>,
-    --    reg_read_data0 =>,
-    --    reg_read_data1 =>
-    --);
+    regs: registers port map (
+        reset => reset,
+        clock => clock,
+        reg_dump => dump,
+        reg_write => '0',
+        reg_write_num => std_logic_vector(to_unsigned(0, 5)),
+        reg_write_data => std_logic_vector(to_unsigned(0, 32)),
+        reg_read_num0 => i_rs,
+        reg_read_num1 => i_rt,
+        reg_read_data0 => r_rs,
+        reg_read_data1 => r_rt
+    );
     
     --main memory:
     --8192 words * 4 bytes/word = 32768 bytes

@@ -70,6 +70,9 @@ begin
                 end loop;
             end if;
             
+            --initizlize the first value in memory
+            mem_read_data <= ram_block(0);
+            
         elsif rising_edge(clock) then
             
             --if writing store the word at the current address
