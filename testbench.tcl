@@ -2,11 +2,16 @@ proc AddWaves {} {
 	;#Add waves we're interested in to the Wave window
     add wave -position end sim:/testbench/clock
     add wave -position end sim:/testbench/reset
+    add wave -position end sim:/testbench/dump
+    add wave -position end sim:/testbench/test
 }
 
 vlib work
 
 ;# Compile components if any
+vcom mux.vhd
+vcom pc.vhd
+vcom alu.vhd
 vcom memory.vhd
 vcom registers.vhd
 vcom processor.vhd
