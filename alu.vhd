@@ -72,6 +72,20 @@ begin
                     
                 when "1101" => --get lo
                     output <= r_lo;
+                    
+                when "1110" => --STL
+                  if (unsigned(input0) < unsigned(input1)) then  
+	                 output <= x"00000001";
+	                else
+	                 output <= x"00000000";
+                  end if;
+                  
+                when "1111" => --SLTI
+                  if (unsigned(input0) < unsigned(input1)) then  
+                      output <= x"00000001";
+                  else
+                     output <= x"00000000";
+                  end if;    
                 
                 when others =>
                     
