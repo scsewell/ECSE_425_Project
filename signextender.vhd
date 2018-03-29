@@ -1,25 +1,16 @@
-LIBRARY ieee;
-USE ieee.std_logic_1164.all;
-USE ieee.numeric_std.all;
+library ieee;
+use ieee.std_logic_1164.all;
+use ieee.numeric_std.all;
 
-ENTITY signextender IS
-    PORT (
-        sign_in: IN STD_LOGIC_VECTOR (15 DOWNTO 0);
-        sign_out: OUT STD_LOGIC_VECTOR (31 DOWNTO 0)
+entity signExtender is
+    port (
+        sign_in     : in std_logic_vector(15 downto 0);
+        sign_out    : out std_logic_vector(31 downto 0)
     );
-END signextender;
+end signExtender;
 
-ARCHITECTURE Behavioral OF signextender IS
-
-BEGIN
-process (sign_in)
+architecture signExtender_arch OF signExtender IS
 begin
-	--One sign extend at a time--
-	if sign_in(15) = '1' then
-		sign_out(31 downto 16) <= "1000000000000000";
-	else
-		sign_out(31 downto 16) <= "0000000000000000";
-	end if;
-	sign_out(15 downto 0) <= sign_in;
-end process;
-END Behavioral;
+    sign_out <= std_logic_vector(resize(signed(sign_in), sign_out'length));
+    
+end signExtender_arch;

@@ -1,24 +1,18 @@
 library ieee;
-use IEEE.std_logic_1164.all;
-use IEEE.numeric_std.all;
+use ieee.std_logic_1164.all;
+use ieee.numeric_std.all;
 
 entity adder is
-port(
-	 operand : in integer;
-	 counter : in std_logic_vector(31 downto 0);
-	 adderOut : out std_logic_vector(31 downto 0)
-	 );
+    port(
+        counter     : in std_logic_vector(31 downto 0);
+        increment   : in integer;
+        adder_out   : out std_logic_vector(31 downto 0)
+    );
 end adder;
 
 architecture adder_arch of adder is
-
-signal add : integer;
-
 begin
 
-	add <= operand + to_integer(unsigned(counter)); 
-	adderOut <= std_logic_vector(to_unsigned(add, adderOut'length));
+    adder_out <= std_logic_vector(to_unsigned(to_integer(unsigned(counter) + increment), adder_out'length));
 
-
-	
 end adder_arch;

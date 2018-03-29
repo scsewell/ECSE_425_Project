@@ -9,6 +9,10 @@ proc AddWaves {} {
 vlib work
 
 ;# Compile components if any
+vcom adder.vhd
+vcom signExtender.vhd
+vcom writeBack.vhd
+vcom controller.vhd
 vcom mux.vhd
 vcom pc.vhd
 vcom alu.vhd

@@ -1,25 +1,26 @@
 library ieee;
-use IEEE.std_logic_1164.all;
-use IEEE.numeric_std.all;
+use ieee.std_logic_1164.all;
+use ieee.numeric_std.all;
 
 entity controller is
-port(clk : in std_logic;
-	 opcode : in std_logic_vector(5 downto 0);
-	 funct : in std_logic_vector(5 downto 0);
-	 branch: in std_logic;
-	 oldBranch: in std_logic;
-	 ALU1src : out STD_LOGIC;
-	 ALU2src : out STD_LOGIC;
-	 MRead : out STD_LOGIC;
-	 MWrite : out STD_LOGIC;
-	 RWrite : out STD_LOGIC;
-	 MemToReg : out STD_LOGIC;
-	 RType: out STD_LOGIC;
-	 JType: out STD_LOGIC;
-	 Shift: out STD_LOGIC;
-	 structuralStall : out STD_LOGIC;
-	 ALUOp : out STD_LOGIC_VECTOR(4 downto 0)
-	 );
+    port(
+        clk         : in std_logic;
+        opcode      : in std_logic_vector(5 downto 0);
+        funct       : in std_logic_vector(5 downto 0);
+        branch      : in std_logic;
+        oldBranch   : in std_logic;
+        ALU1src     : out STD_LOGIC;
+        ALU2src     : out STD_LOGIC;
+        MRead       : out STD_LOGIC;
+        MWrite      : out STD_LOGIC;
+        RWrite      : out STD_LOGIC;
+        MemToReg    : out STD_LOGIC;
+        RType       : out STD_LOGIC;
+        JType       : out STD_LOGIC;
+        Shift       : out STD_LOGIC;
+        structuralStall : out STD_LOGIC;
+        ALUOp       : out STD_LOGIC_VECTOR(4 downto 0)
+    );
 end controller;
 
 architecture controller_arch of controller is
