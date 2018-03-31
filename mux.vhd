@@ -9,9 +9,9 @@ entity mux is
     );
     port (
         s   : in std_logic;
-        i0  : in std_logic_vector (bus_width-1 downto 0);
-        i1  : in std_logic_vector (bus_width-1 downto 0);
-        o   : out std_logic_vector (bus_width-1 downto 0)
+        i0  : in std_logic_vector(bus_width-1 downto 0);
+        i1  : in std_logic_vector(bus_width-1 downto 0);
+        o   : out std_logic_vector(bus_width-1 downto 0)
     );
 end mux;
 

@@ -11,12 +11,12 @@ entity registers is
         clock           : in std_logic;
         reg_dump        : in std_logic;
         reg_write       : in std_logic;
-        reg_write_num   : in std_logic_vector (4 downto 0);
-        reg_write_data  : in std_logic_vector (31 downto 0);
-        reg_read_num0   : in std_logic_vector (4 downto 0);
-        reg_read_num1   : in std_logic_vector (4 downto 0);
-        reg_read_data0  : out std_logic_vector (31 downto 0);
-        reg_read_data1  : out std_logic_vector (31 downto 0)
+        reg_write_num   : in std_logic_vector(4 downto 0);
+        reg_write_data  : in std_logic_vector(31 downto 0);
+        reg_read_num0   : in std_logic_vector(4 downto 0);
+        reg_read_num1   : in std_logic_vector(4 downto 0);
+        reg_read_data0  : out std_logic_vector(31 downto 0);
+        reg_read_data1  : out std_logic_vector(31 downto 0)
     );
 end registers;
 
@@ -33,7 +33,7 @@ begin
         if reset = '1' then
             --initialize all registers to zero
             for i in 0 to 31 loop
-                reg_block(i) <= std_logic_vector(to_unsigned(0, 32));
+                reg_block(i) <= x"00000000";
             end loop;
             
         elsif rising_edge(clock) then
@@ -43,7 +43,7 @@ begin
             end if;
             
             --make sure that R0 is always 0
-            reg_block(0) <= std_logic_vector(to_unsigned(0, 32));
+            reg_block(0) <= x"00000000";
             
             --read the registers at the read addresses
             reg_read_data0 <= reg_block(to_integer(unsigned(reg_read_num0)));

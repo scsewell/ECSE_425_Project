@@ -8,16 +8,20 @@ proc AddWaves {} {
 
 vlib work
 
-;# Compile components if any
-vcom adder.vhd
-vcom signExtender.vhd
-vcom writeBack.vhd
-vcom controller.vhd
+;# Compile files
+vcom signals.vhd
+
 vcom mux.vhd
-vcom pc.vhd
 vcom alu.vhd
 vcom memory.vhd
 vcom registers.vhd
+
+vcom stage_if.vhd
+vcom stage_id.vhd
+vcom stage_ex.vhd
+vcom stage_mem.vhd
+vcom stage_wb.vhd
+
 vcom processor.vhd
 vcom testbench.vhd
 

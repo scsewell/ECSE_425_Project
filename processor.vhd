@@ -1,159 +1,211 @@
 library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
+use work.signals.all;
 
 entity processor is
     port (
         reset   : in std_logic;
         clock   : in std_logic;
         dump    : in std_logic;
-        test    : out std_logic_vector (31 downto 0)
+        test    : out std_logic_vector(31 downto 0)
     );
 end processor;
 
 architecture processor_arch of processor is
     
-    --import all components
-    component mux is
-        generic (
-            bus_width : integer --the number of bits in the inputs and output
-        );
+    --fetch stage
+    component stage_if is
         port (
-            s   : in std_logic;
-            i0  : in std_logic_vector (bus_width-1 downto 0);
-            i1  : in std_logic_vector (bus_width-1 downto 0);
-            o   : out std_logic_vector (bus_width-1 downto 0)
+            reset       : in std_logic;
+            clock       : in std_logic;
+            dump        : in std_logic;
+            use_new_pc  : in std_logic;
+            new_pc      : in std_logic_vector(31 downto 0);
+            instruction : out std_logic_vector(31 downto 0);
+            pc          : out std_logic_vector(31 downto 0)
         );
     end component;
     
-    component pc is
-        port (
-            reset           : in std_logic;
-            clock           : in std_logic;
-            next_address    : in std_logic_vector (31 downto 0);
-            current_address : out std_logic_vector (31 downto 0)
-        );
-    end component;
-
+    signal instruction  : std_logic_vector(31 downto 0);
+    signal pc           : std_logic_vector(31 downto 0);
+    
+    alias i_opcode      : std_logic_vector(5 downto 0) is instruction(31 downto 26);
+    alias i_rs          : std_logic_vector(4 downto 0) is instruction(25 downto 21);
+    alias i_rt          : std_logic_vector(4 downto 0) is instruction(20 downto 16);
+    alias i_rd          : std_logic_vector(4 downto 0) is instruction(15 downto 11);
+    alias i_shamt       : std_logic_vector(4 downto 0) is instruction(10 downto 6);
+    alias i_funct       : std_logic_vector(5 downto 0) is instruction(5 downto 0);
+    alias i_immediate   : std_logic_vector(15 downto 0) is instruction(15 downto 0);
+    alias i_address     : std_logic_vector(25 downto 0) is instruction(25 downto 0);
+    
+    --registers
     component registers
         port (
             reset           : in std_logic;
             clock           : in std_logic;
             reg_dump        : in std_logic;
             reg_write       : in std_logic;
-            reg_write_num   : in std_logic_vector (4 downto 0);
-            reg_write_data  : in std_logic_vector (31 downto 0);
-            reg_read_num0   : in std_logic_vector (4 downto 0);
-            reg_read_num1   : in std_logic_vector (4 downto 0);
-            reg_read_data0  : out std_logic_vector (31 downto 0);
-            reg_read_data1  : out std_logic_vector (31 downto 0)
+            reg_write_num   : in std_logic_vector(4 downto 0);
+            reg_write_data  : in std_logic_vector(31 downto 0);
+            reg_read_num0   : in std_logic_vector(4 downto 0);
+            reg_read_num1   : in std_logic_vector(4 downto 0);
+            reg_read_data0  : out std_logic_vector(31 downto 0);
+            reg_read_data1  : out std_logic_vector(31 downto 0)
         );
     end component;
     
-    component memory
-        generic (
-            is_instruction  : boolean; --declares if this memory hold instructions
-            ram_size        : integer --the number of elements in the memory
+    signal r_rs   : std_logic_vector(31 downto 0);
+    signal r_rt   : std_logic_vector(31 downto 0);
+    
+    --decode stage
+    component stage_id is
+        port (
+            reset       : in std_logic;
+            clock       : in std_logic;
+            instruction : in std_logic_vector(31 downto 0);
+            ctrl        : out CTRL_TYPE
         );
+    end component;
+    
+    signal ctrl_ex      : CTRL_TYPE;
+    
+    --execution stage
+    component stage_ex is
         port (
             reset           : in std_logic;
             clock           : in std_logic;
-            mem_dump        : in std_logic;
-            mem_address     : in std_logic_vector (31 downto 0);
-            mem_write       : in std_logic;
-            mem_write_data  : in std_logic_vector (31 downto 0);
-            mem_read_data   : out std_logic_vector (31 downto 0)
+            rs              : in std_logic_vector(31 downto 0);
+            rt              : in std_logic_vector(31 downto 0);
+            samnt           : in std_logic_vector(4 downto 0);
+            immediate       : in std_logic_vector(15 downto 0);
+            address         : in std_logic_vector(25 downto 0);
+            pc              : in std_logic_vector(31 downto 0);
+            ctrl_in         : in CTRL_TYPE;
+            ctrl_out        : out CTRL_TYPE;
+            results_ex_out  : out RESULTS_EX_TYPE
         );
     end component;
     
-    --program counter signals
-    signal pc_address       : std_logic_vector (31 downto 0);
-    signal next_pc_address  : std_logic_vector (31 downto 0);
+    signal ctrl_mem         : CTRL_TYPE;
+    signal results_ex_mem   : RESULTS_EX_TYPE;
     
-    --instruction signals
-    signal instruction      : std_logic_vector (31 downto 0);
-    signal i_opcode         : std_logic_vector (5 downto 0);
-    signal i_rs             : std_logic_vector (4 downto 0);
-    signal i_rt             : std_logic_vector (4 downto 0);
-    signal i_rd             : std_logic_vector (4 downto 0);
-    signal i_shamt          : std_logic_vector (4 downto 0);
-    signal i_funct          : std_logic_vector (5 downto 0);
-    signal i_immediate      : std_logic_vector (15 downto 0);
-    signal i_address        : std_logic_vector (25 downto 0);
+    --memory stage
+    component stage_mem is
+        port (
+            reset           : in std_logic;
+            clock           : in std_logic;
+            dump            : in std_logic;
+            ctrl_in         : in CTRL_TYPE;
+            ctrl_out        : out CTRL_TYPE;
+            results_ex_in   : in RESULTS_EX_TYPE;
+            results_ex_out  : out RESULTS_EX_TYPE;
+            results_mem_out : out RESULTS_MEM_TYPE
+        );
+    end component;
     
-    --register signals
-    signal r_rs   : std_logic_vector (31 downto 0);
-    signal r_rt   : std_logic_vector (31 downto 0);
+    signal ctrl_wb         : CTRL_TYPE;
+    signal results_ex_wb   : RESULTS_EX_TYPE;
+    signal results_mem_wb  : RESULTS_MEM_TYPE;
+    
+    --write back stage
+    component stage_wb is
+        port (
+            reset           : in std_logic;
+            clock           : in std_logic;
+            ctrl_in         : in CTRL_TYPE;
+            results_ex_in   : in RESULTS_EX_TYPE;
+            results_mem_in  : in RESULTS_MEM_TYPE;
+            use_new_pc      : out std_logic;
+            new_pc          : out std_logic_vector(31 downto 0);
+            write_reg       : out std_logic;
+            write_reg_num   : out std_logic_vector(4 downto 0);
+            write_reg_data  : out std_logic_vector(31 downto 0)
+        );
+    end component;
+    
+    signal use_new_pc       : std_logic;
+    signal new_pc           : std_logic_vector(31 downto 0);
+    signal write_reg        : std_logic;
+    signal write_reg_num    : std_logic_vector(4 downto 0);
+    signal write_reg_data   : std_logic_vector(31 downto 0);
     
 begin
-    --program counter:
-    pc0: pc port map (
+
+    --instruction fetch stage
+    stage_if_inst: stage_if port map (
         reset => reset,
         clock => clock,
-        next_address => next_pc_address,
-        current_address => pc_address
+        dump => dump,
+        use_new_pc => use_new_pc,
+        new_pc => new_pc,
+        instruction => instruction,
+        pc => pc
     );
     
-    --instruction memory:
-    --max program length is 1024 instructions
-    instruction_memory: memory generic map(true, 1024) port map (
-        reset => reset,
-        clock => clock,
-        mem_dump => dump,
-        mem_address => pc_address,
-        mem_write => '0',
-        mem_write_data => std_logic_vector(to_unsigned(0, 32)),
-        mem_read_data => instruction
-    );
-    
-    test <= instruction;
-    
-    --extract the various parts of the instruction
-    i_opcode <= instruction(31 downto 26);
-    i_rs <= instruction(25 downto 21);
-    i_rt <= instruction(20 downto 16);
-    i_rd <= instruction(15 downto 11);
-    i_shamt <= instruction(10 downto 6);
-    i_funct <= instruction(5 downto 0);
-    i_immediate <= instruction(15 downto 0);
-    i_address <= instruction(25 downto 0);
-    
-    --registers:
+    --registers
     regs: registers port map (
         reset => reset,
         clock => clock,
         reg_dump => dump,
-        reg_write => '0',
-        reg_write_num => std_logic_vector(to_unsigned(0, 5)),
-        reg_write_data => std_logic_vector(to_unsigned(0, 32)),
+        reg_write => write_reg,
+        reg_write_num => write_reg_num,
+        reg_write_data => write_reg_data,
         reg_read_num0 => i_rs,
         reg_read_num1 => i_rt,
         reg_read_data0 => r_rs,
         reg_read_data1 => r_rt
     );
     
-    --main memory:
-    --8192 words * 4 bytes/word = 32768 bytes
-    --main_memory: memory generic map(false, 8192) port map (
-    --    reset => reset,
-    --    clock => clock,
-    --    mem_dump => dump,
-    --    mem_address =>,
-    --    mem_write =>,
-    --    mem_write_data =>,
-    --    mem_read_data =>
-    --);
+    --instruction decode stage
+    stage_id_inst: stage_id port map (
+        reset => reset,
+        clock => clock,
+        instruction => instruction,
+        ctrl => ctrl_ex
+    );
     
-    main_proc: process (clock)
-    begin
-        if reset = '1' then
-            next_pc_address <= std_logic_vector(to_unsigned(4, 32));
-            
-        elsif rising_edge(clock) then
-            --increment pc to next instruction
-            next_pc_address <= std_logic_vector(unsigned(next_pc_address) + to_unsigned(4, 32));
-            
-        end if;
-    end process;
+    --execution stage
+    stage_ex_inst: stage_ex port map (
+        reset => reset,
+        clock => clock,
+        rs => r_rs,
+        rt => r_rt,
+        samnt => i_shamt,
+        immediate => i_immediate,
+        address => i_address,
+        pc => pc,
+        ctrl_in => ctrl_ex,
+        ctrl_out => ctrl_mem,
+        results_ex_out => results_ex_mem
+    );
+    
+    --memory stage
+    stage_mem_inst: stage_mem port map (
+        reset => reset,
+        clock => clock,
+        dump => dump,
+        ctrl_in => ctrl_ex,
+        ctrl_out => ctrl_wb,
+        results_ex_in => results_ex_mem,
+        results_ex_out => results_ex_wb,
+        results_mem_out => results_mem_wb
+    );
+    
+    --write back stage
+    stage_wb_inst: stage_wb port map (
+        reset => reset,
+        clock => clock,
+        ctrl_in => ctrl_ex,
+        results_ex_in => results_ex_wb,
+        results_mem_in => results_mem_wb,
+        use_new_pc => use_new_pc,
+        new_pc => new_pc,
+        write_reg => write_reg,
+        write_reg_num => write_reg_num,
+        write_reg_data => write_reg_data
+    );
+    
+    test <= instruction;
     
 end processor_arch;

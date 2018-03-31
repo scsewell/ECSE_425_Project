@@ -3,23 +3,23 @@ use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 use std.textio.all;
 
---The memory model used by our processor. For simplicity we use a word array as opposed to a 
---byte array. We only need to support the load word and store word instructions, so this makes
---things easier. Additionally, memory delay is removed, with all operations completing in one 
---cycle.
+--The memory model used by our processor, implementing both instruction and program meory.
+--For simplicity we use a word array as opposed to a byte array. We only need to support
+--the load word and store word instructions, so this makes things easier. Additionally,
+--latency is removed, with all operations completing in one cycle.
 entity memory is
     generic (
-        is_instruction  : boolean; --declares if this memory hold instructions
+        is_instruction  : boolean; --declares if this memory holds instructions
         ram_size        : integer --the number of elements in the memory
     );
     port (
         reset           : in std_logic;
         clock           : in std_logic;
         mem_dump        : in std_logic;
-        mem_address     : in std_logic_vector (31 downto 0);
+        mem_address     : in std_logic_vector(31 downto 0);
         mem_write       : in std_logic;
-        mem_write_data  : in std_logic_vector (31 downto 0);
-        mem_read_data   : out std_logic_vector (31 downto 0)
+        mem_write_data  : in std_logic_vector(31 downto 0);
+        mem_read_data   : out std_logic_vector(31 downto 0)
     );
 end memory;
 
@@ -40,7 +40,7 @@ begin
     
         file f_in           : text;
         variable f_line     : line;
-        variable f_lineVal  : bit_vector (31 downto 0);
+        variable f_lineVal  : bit_vector(31 downto 0);
         
     begin
         if reset = '1' then
@@ -57,7 +57,7 @@ begin
                         read(f_line, f_lineVal);
                         ram_block(i) <= to_stdlogicvector(f_lineVal);
                     else
-                        ram_block(i) <= std_logic_vector(to_unsigned(0, 32));
+                        ram_block(i) <= x"00000000";
                     end if;
                 end loop;
                 --close the program file
@@ -66,7 +66,7 @@ begin
             else
                 --initialize all entries to zero in main memory
                 for i in 0 to ram_size-1 loop
-                    ram_block(i) <= std_logic_vector(to_unsigned(0, 32));
+                    ram_block(i) <= x"00000000";
                 end loop;
             end if;
             

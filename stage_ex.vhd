@@ -1,0 +1,127 @@
+library ieee;
+use ieee.std_logic_1164.all;
+use ieee.numeric_std.all;
+use work.signals.all;
+
+--Implements the execution stage of the pipeline.
+entity stage_ex is
+    port (
+        reset           : in std_logic;
+        clock           : in std_logic;
+        rs              : in std_logic_vector(31 downto 0);
+        rt              : in std_logic_vector(31 downto 0);
+        samnt           : in std_logic_vector(4 downto 0);
+        immediate       : in std_logic_vector(15 downto 0);
+        address         : in std_logic_vector(25 downto 0);
+        pc              : in std_logic_vector(31 downto 0);
+        ctrl_in         : in CTRL_TYPE;
+        ctrl_out        : out CTRL_TYPE;
+        results_ex_out  : out RESULTS_EX_TYPE
+    );
+end stage_ex;
+
+architecture stage_ex_arch of stage_ex is
+
+    --import alu
+    component alu is
+        port (
+            reset   : in std_logic;
+            op      : in ALU_OP_TYPE;
+            input0  : in std_logic_vector(31 downto 0);
+            input1  : in std_logic_vector(31 downto 0);
+            output  : out std_logic_vector(31 downto 0);
+            zero    : out std_logic
+        );
+    end component;
+    
+    --signals
+    signal alu_in0      : std_logic_vector(31 downto 0);
+    signal alu_in1      : std_logic_vector(31 downto 0);
+    signal alu_output   : std_logic_vector(31 downto 0);
+    signal alu_zero     : std_logic;
+    
+begin
+    
+    --alu instance
+    alu_inst: alu port map (
+        reset => reset,
+        op => ctrl_in.alu_op,
+        input0 => alu_in0,
+        input1 => alu_in1,
+        output => alu_output,
+        zero => alu_zero
+    );
+    
+    --main behaviors
+    main_proc: process(clock)
+    begin
+        if (reset = '1') then
+            alu_in0 <= x"00000000";
+            alu_in1 <= x"00000000";
+            
+            results_ex_out.output <= x"00000000";
+            results_ex_out.zero <= '0';
+            results_ex_out.passthrough <= x"00000000";
+            results_ex_out.pc <= x"00000000";
+            
+            ctrl_out.instruct_type <= i_no_op;
+        
+        elsif rising_edge(clock) then
+        
+            --set inputs and outputs
+            case ctrl_in.exec_source is
+                when es_rs_rt =>
+                    alu_in0 <= rs;
+                    alu_in1 <= rt;
+                    results_ex_out.passthrough <= x"00000000";
+                    results_ex_out.pc <= x"00000000";
+                    
+                when es_rt_samnt =>
+                    alu_in0 <= rt;
+                    alu_in1 <= std_logic_vector(resize(unsigned(samnt), 32));
+                    results_ex_out.passthrough <= x"00000000";
+                    results_ex_out.pc <= x"00000000";
+                    
+                when es_rs_imm_zero_extend =>
+                    alu_in0 <= rs;
+                    alu_in1 <= std_logic_vector(resize(unsigned(immediate), 32));
+                    results_ex_out.passthrough <= x"00000000";
+                    results_ex_out.pc <= x"00000000";
+                    
+                when es_rs_imm_sign_extend =>
+                    alu_in0 <= rs;
+                    alu_in1 <= std_logic_vector(resize(signed(immediate), 32));
+                    results_ex_out.passthrough <= rt;
+                    results_ex_out.pc <= x"00000000";
+                    
+                when es_imm_sign_extend =>
+                    alu_in0 <= std_logic_vector(resize(signed(immediate), 32));
+                    alu_in1 <= x"00000000";
+                    results_ex_out.passthrough <= x"00000000";
+                    results_ex_out.pc <= x"00000000";
+                    
+                when es_rs_rt_pc_imm_sign_extend =>
+                    --output the jump address, zero will be set using rs and rt
+                    alu_in0 <= rs;
+                    alu_in1 <= rt;
+                    results_ex_out.passthrough <= std_logic_vector(to_unsigned(to_integer(unsigned(pc)) + to_integer(signed(immediate & "00")), 32));
+                    results_ex_out.pc <= x"00000000";
+                    
+                when es_pc_address =>
+                    --output the jump address
+                    alu_in0 <= x"00000000";
+                    alu_in1 <= x"00000000";
+                    results_ex_out.passthrough <= pc(31 downto 28) & address & "00";
+                    results_ex_out.pc <= pc;
+            end case;
+            
+            --pass along the control signals
+            ctrl_out <= ctrl_in;
+            results_ex_out.output <= alu_output;
+            results_ex_out.zero <= alu_zero;
+            
+        end if;
+        
+    end process;
+    
+end stage_ex_arch;
