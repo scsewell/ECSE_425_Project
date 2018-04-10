@@ -78,5 +78,5 @@ package signals is
         record
             output      : std_logic_vector(31 downto 0);
         end record;
-        
+	
 end signals;

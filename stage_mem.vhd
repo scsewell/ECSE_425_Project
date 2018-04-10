@@ -9,6 +9,7 @@ entity stage_mem is
         reset           : in std_logic;
         clock           : in std_logic;
         dump            : in std_logic;
+        flush           : in std_logic;
         ctrl_in         : in CTRL_TYPE;
         ctrl_out        : out CTRL_TYPE;
         results_ex_in   : in RESULTS_EX_TYPE;
@@ -56,14 +57,15 @@ begin
     --main behaviors
     main_proc: process(clock)
     begin
-        if (reset = '1') then
-            results_mem_out.output <= x"00000000";
-            ctrl_out.instruct_type <= i_no_op;
-            
-        elsif rising_edge(clock) then
-            --pass along the signals
-            ctrl_out <= ctrl_in;
-            results_ex_out <= results_ex_in;
+        if falling_edge(clock) then
+            if (reset = '1' or flush = '1' or ctrl_in.instruct_type = i_no_op) then
+                results_mem_out.output <= x"00000000";
+                ctrl_out.instruct_type <= i_no_op;
+            else
+                --pass along the signals
+                ctrl_out <= ctrl_in;
+                results_ex_out <= results_ex_in;
+            end if;
         end if;
         
     end process;

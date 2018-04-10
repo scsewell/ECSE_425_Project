@@ -36,7 +36,7 @@ begin
                 reg_block(i) <= x"00000000";
             end loop;
             
-        elsif rising_edge(clock) then
+        elsif falling_edge(clock) then
             --if writing store the word at the given register
             if reg_write = '1' then
                 reg_block(to_integer(unsigned(reg_write_num))) <= reg_write_data;
@@ -58,7 +58,7 @@ begin
         variable f_line : line;
     
     begin
-        if rising_edge(reg_dump) then
+        if falling_edge(reg_dump) then
         
             --open file to write the register contents to
             file_open(f_out, "register_file.txt", write_mode);

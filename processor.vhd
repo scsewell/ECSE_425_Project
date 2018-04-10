@@ -7,8 +7,7 @@ entity processor is
     port (
         reset   : in std_logic;
         clock   : in std_logic;
-        dump    : in std_logic;
-        test    : out std_logic_vector(31 downto 0)
+        dump    : in std_logic
     );
 end processor;
 
@@ -63,6 +62,7 @@ architecture processor_arch of processor is
         port (
             reset       : in std_logic;
             clock       : in std_logic;
+			flush       : in std_logic;
             instruction : in std_logic_vector(31 downto 0);
             ctrl        : out CTRL_TYPE
         );
@@ -75,6 +75,7 @@ architecture processor_arch of processor is
         port (
             reset           : in std_logic;
             clock           : in std_logic;
+			flush       	: in std_logic;
             rs              : in std_logic_vector(31 downto 0);
             rt              : in std_logic_vector(31 downto 0);
             samnt           : in std_logic_vector(4 downto 0);
@@ -96,6 +97,7 @@ architecture processor_arch of processor is
             reset           : in std_logic;
             clock           : in std_logic;
             dump            : in std_logic;
+			flush       	: in std_logic;
             ctrl_in         : in CTRL_TYPE;
             ctrl_out        : out CTRL_TYPE;
             results_ex_in   : in RESULTS_EX_TYPE;
@@ -113,6 +115,7 @@ architecture processor_arch of processor is
         port (
             reset           : in std_logic;
             clock           : in std_logic;
+			flush       	: in std_logic;
             ctrl_in         : in CTRL_TYPE;
             results_ex_in   : in RESULTS_EX_TYPE;
             results_mem_in  : in RESULTS_MEM_TYPE;
@@ -161,6 +164,7 @@ begin
     stage_id_inst: stage_id port map (
         reset => reset,
         clock => clock,
+		flush => use_new_pc,
         instruction => instruction,
         ctrl => ctrl_ex
     );
@@ -169,6 +173,7 @@ begin
     stage_ex_inst: stage_ex port map (
         reset => reset,
         clock => clock,
+		flush => use_new_pc,
         rs => r_rs,
         rt => r_rt,
         samnt => i_shamt,
@@ -185,7 +190,8 @@ begin
         reset => reset,
         clock => clock,
         dump => dump,
-        ctrl_in => ctrl_ex,
+		flush => use_new_pc,
+        ctrl_in => ctrl_mem,
         ctrl_out => ctrl_wb,
         results_ex_in => results_ex_mem,
         results_ex_out => results_ex_wb,
@@ -196,7 +202,8 @@ begin
     stage_wb_inst: stage_wb port map (
         reset => reset,
         clock => clock,
-        ctrl_in => ctrl_ex,
+		flush => use_new_pc,
+        ctrl_in => ctrl_wb,
         results_ex_in => results_ex_wb,
         results_mem_in => results_mem_wb,
         use_new_pc => use_new_pc,
@@ -205,7 +212,5 @@ begin
         write_reg_num => write_reg_num,
         write_reg_data => write_reg_data
     );
-    
-    test <= instruction;
     
 end processor_arch;

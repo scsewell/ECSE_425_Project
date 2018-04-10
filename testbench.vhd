@@ -1,6 +1,7 @@
 library ieee;
 USE ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
+use work.signals.all;
 
 entity testbench is
 end testbench;
@@ -14,8 +15,7 @@ architecture testbench_arch of testbench is
         port (
             reset   : in std_logic;
             clock   : in std_logic;
-            dump    : in std_logic;
-            test    : out std_logic_vector (31 downto 0)
+            dump    : in std_logic
         );
     end component;
 
@@ -23,14 +23,12 @@ architecture testbench_arch of testbench is
     signal clock: std_logic := '0';
     signal reset: std_logic := '0';
     signal dump: std_logic := '0';
-    signal test: std_logic_vector (31 downto 0) := std_logic_vector(to_unsigned(0, 32));
 
 begin
     processor_instance: processor port map(
         clock => clock,
         reset => reset,
-        dump => dump,
-        test => test
+        dump => dump
     );
 
     --System clock
@@ -47,8 +45,9 @@ begin
     begin
         --start the simulation with a reset
         reset <= '1';
-        wait for clk_period;
+        wait for 4500 ps;
         reset <= '0';
+        wait for 500 ps;
     
         --at the end of the simulation dump the memory
         wait for 9990 * clk_period;

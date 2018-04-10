@@ -73,7 +73,7 @@ begin
             --initizlize the first value in memory
             mem_read_data <= ram_block(0);
             
-        elsif rising_edge(clock) then
+        elsif falling_edge(clock) then
             
             --if writing store the word at the current address
             if mem_write = '1' then
@@ -94,7 +94,7 @@ begin
         variable f_line         : line;
     
     begin
-        if rising_edge(mem_dump) then
+        if falling_edge(mem_dump) then
         
             --open file to write the memory contents to with a different
             --name for main memory and instruction memory files

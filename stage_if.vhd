@@ -54,19 +54,19 @@ begin
     --main behaviors
     main_proc: process(clock)
     begin
-        if (reset = '1') then
-            --initialze program to first instruction on reset
-            pc_address <= x"00000000";
-            
-        elsif rising_edge(clock) then
-            
-            --load a new address if given, otherwise increment by 4
-            if (use_new_pc = '1') then
-                pc_address <= new_pc;
+        if falling_edge(clock) then
+            if (reset = '1') then
+                --initialze program to first instruction on reset
+                pc_address <= x"00000000";
             else
-                pc_address <= std_logic_vector(unsigned(pc_address) + to_unsigned(4, 32));
-            end if;
+                --load a new address if given, otherwise increment by 4
+                if (use_new_pc = '1') then
+                    pc_address <= new_pc;
+                else
+                    pc_address <= std_logic_vector(unsigned(pc_address) + to_unsigned(4, 32));
+                end if;
             
+            end if;
         end if;
     end process;
     

@@ -3,7 +3,20 @@ proc AddWaves {} {
     add wave -position end sim:/testbench/clock
     add wave -position end sim:/testbench/reset
     add wave -position end sim:/testbench/dump
-    add wave -position end sim:/testbench/test
+    add wave -radix unsigned -position end sim:/testbench/processor_instance/stage_if_inst/pc_address
+    add wave -position end sim:/testbench/processor_instance/regs/reg_write
+    add wave -position end sim:/testbench/processor_instance/regs/reg_block
+    add wave -radix unsigned -position end sim:/testbench/processor_instance/regs/reg_write_num
+    add wave -radix unsigned -position end sim:/testbench/processor_instance/regs/reg_write_data
+    add wave -position end sim:/testbench/processor_instance/stage_id_inst/instruction
+    add wave -radix unsigned -position end sim:/testbench/processor_instance/stage_ex_inst/ctrl_in
+    add wave -radix unsigned -position end sim:/testbench/processor_instance/stage_mem_inst/ctrl_in
+    add wave -radix unsigned -position end sim:/testbench/processor_instance/stage_mem_inst/results_ex_in
+    add wave -radix unsigned -position end sim:/testbench/processor_instance/stage_mem_inst/ctrl_in
+	add wave -position end sim:/testbench/processor_instance/stage_mem_inst/main_memory_inst/ram_block
+    add wave -radix unsigned -position end sim:/testbench/processor_instance/stage_wb_inst/ctrl_in
+    add wave -radix unsigned -position end sim:/testbench/processor_instance/stage_wb_inst/results_ex_in
+    add wave -radix unsigned -position end sim:/testbench/processor_instance/stage_wb_inst/results_mem_in
 }
 
 vlib work
