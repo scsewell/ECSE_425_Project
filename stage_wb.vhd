@@ -10,8 +10,6 @@ entity stage_wb is
         clock           : in std_logic;
         flush           : in std_logic;
         ctrl_in         : in CTRL_TYPE;
-        results_ex_in   : in RESULTS_EX_TYPE;
-        results_mem_in  : in RESULTS_MEM_TYPE;
         use_new_pc      : out std_logic;
         new_pc          : out std_logic_vector(31 downto 0);
         write_reg       : out std_logic;
@@ -34,67 +32,67 @@ begin
                 write_reg <= '0';
                 write_reg_num <= "00000";
                 write_reg_data <= x"00000000";
+                
             else
-            
                 case ctrl_in.instruct_type is
                     when i_no_op|i_write_hi_low|i_write_mem =>
-                        use_new_pc <= '0';
-                        new_pc <= x"00000000";
-                        write_reg <= '0';
-                        write_reg_num <= "00000";
-                        write_reg_data <= x"00000000";
+                        use_new_pc      <= '0';
+                        new_pc          <= x"00000000";
+                        write_reg       <= '0';
+                        write_reg_num   <= "00000";
+                        write_reg_data  <= x"00000000";
                         
                     when i_write_reg =>
-                        use_new_pc <= '0';
-                        new_pc <= x"00000000";
-                        write_reg <= '1';
-                        write_reg_num <= ctrl_in.write_reg_num;
-                        write_reg_data <= results_ex_in.output;
+                        use_new_pc      <= '0';
+                        new_pc          <= x"00000000";
+                        write_reg       <= '1';
+                        write_reg_num   <= ctrl_in.write_reg_num;
+                        write_reg_data  <= ctrl_in.alu_output;
                         
                     when i_read_mem =>
-                        use_new_pc <= '0';
-                        new_pc <= x"00000000";
-                        write_reg <= '1';
-                        write_reg_num <= ctrl_in.write_reg_num;
-                        write_reg_data <= results_mem_in.output;
+                        use_new_pc      <= '0';
+                        new_pc          <= x"00000000";
+                        write_reg       <= '1';
+                        write_reg_num   <= ctrl_in.write_reg_num;
+                        write_reg_data  <= ctrl_in.mem_output;
                         
                     when i_jump =>
-                        use_new_pc <= '1';
-                        new_pc <= results_ex_in.passthrough;
-                        write_reg <= '0';
-                        write_reg_num <= "00000";
-                        write_reg_data <= x"00000000";
+                        use_new_pc      <= '1';
+                        new_pc          <= ctrl_in.alu_passthrough;
+                        write_reg       <= '0';
+                        write_reg_num   <= "00000";
+                        write_reg_data  <= x"00000000";
                         
                     when i_jump_link =>
-                        use_new_pc <= '1';
-                        new_pc <= results_ex_in.passthrough;
-                        write_reg <= '1';
-                        write_reg_num <= "11111";
-                        write_reg_data <= std_logic_vector(unsigned(ctrl_in.pc) + to_unsigned(8, 32));
+                        use_new_pc      <= '1';
+                        new_pc          <= ctrl_in.alu_passthrough;
+                        write_reg       <= '1';
+                        write_reg_num   <= "11111"; --link register is $31
+                        write_reg_data  <= std_logic_vector(unsigned(ctrl_in.pc) + to_unsigned(8, 32));
                         
                     when i_branch_eq =>
-                        if (results_ex_in.zero = '1') then
-                            use_new_pc <= '1';
-                            new_pc <= results_ex_in.passthrough;
+                        if (ctrl_in.alu_output = x"00000000") then
+                            use_new_pc  <= '1';
+                            new_pc      <= ctrl_in.alu_passthrough;
                         else
-                            use_new_pc <= '0';
-                            new_pc <= x"00000000";
+                            use_new_pc  <= '0';
+                            new_pc      <= x"00000000";
                         end if;
-                        write_reg <= '0';
-                        write_reg_num <= "00000";
-                        write_reg_data <= x"00000000";
+                        write_reg       <= '0';
+                        write_reg_num   <= "00000";
+                        write_reg_data  <= x"00000000";
                         
                     when i_branch_neq =>
-                        if (results_ex_in.zero = '0') then
-                            use_new_pc <= '1';
-                            new_pc <= results_ex_in.passthrough;
+                        if (ctrl_in.alu_output = x"00000000") then
+                            use_new_pc  <= '0';
+                            new_pc      <= x"00000000";
                         else
-                            use_new_pc <= '0';
-                            new_pc <= x"00000000";
+                            use_new_pc  <= '1';
+                            new_pc      <= ctrl_in.alu_passthrough;
                         end if;
-                        write_reg <= '0';
-                        write_reg_num <= "00000";
-                        write_reg_data <= x"00000000";
+                        write_reg       <= '0';
+                        write_reg_num   <= "00000";
+                        write_reg_data  <= x"00000000";
                         
                 end case;
             end if;

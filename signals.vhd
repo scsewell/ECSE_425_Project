@@ -44,15 +44,15 @@ package signals is
     
     --enumeration defining possible intruction types
     type INSTRUCTION_TYPE is (
-        i_no_op,
-        i_write_reg,
-        i_write_hi_low,
-        i_write_mem,
-        i_read_mem,
-        i_jump,
-        i_jump_link,
-        i_branch_eq,
-        i_branch_neq
+        i_no_op,        --the instruction has no effect
+        i_write_reg,    --the instruction sets a register value using alu output
+        i_write_hi_low, --the instruction sets the hi/lo register values in the alu
+        i_write_mem,    --the instruction sets a memory value
+        i_read_mem,     --the instruction reads a memory value and sets a register
+        i_jump,         --the instruction sets the program counter value
+        i_jump_link,    --the instruction sets the program counter value and sets the link register value
+        i_branch_eq,    --the instruction sets the program counter value
+        i_branch_neq    --the instruction sets the program counter value
     );
     
     --the type used to pass control and data signals between various stages of the pipeline
@@ -61,23 +61,12 @@ package signals is
             pc              : std_logic_vector(31 downto 0); --the program counter address when this instruction was fetched
             instruction     : std_logic_vector(31 downto 0); --the instruction associated with the control signals
             instruct_type   : INSTRUCTION_TYPE;              --the type of instruction
-            exec_source     : EXEC_SOURCE_TYPE;
+            exec_source     : EXEC_SOURCE_TYPE;              --the inputs needed for the alu operation
             alu_op          : ALU_OP_TYPE;                   --the alu operation used for this instruction
+            alu_output      : std_logic_vector(31 downto 0); --the output of the alu
+            alu_passthrough : std_logic_vector(31 downto 0); --a value passed from the exe stage
+            mem_output      : std_logic_vector(31 downto 0); --the output of the memory stage
             write_reg_num   : std_logic_vector(4 downto 0);  --the register to store the result of this operation
         end record;
     
-    --the type used to pass execution stage output
-    type RESULTS_EX_TYPE is
-        record
-            output      : std_logic_vector(31 downto 0);
-            zero        : std_logic;
-            passthrough : std_logic_vector(31 downto 0);
-        end record;
-        
-    --the type used to pass memory stage output
-    type RESULTS_MEM_TYPE is
-        record
-            output      : std_logic_vector(31 downto 0);
-        end record;
-	
 end signals;

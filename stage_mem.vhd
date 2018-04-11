@@ -11,10 +11,7 @@ entity stage_mem is
         dump            : in std_logic;
         flush           : in std_logic;
         ctrl_in         : in CTRL_TYPE;
-        ctrl_out        : out CTRL_TYPE;
-        results_ex_in   : in RESULTS_EX_TYPE;
-        results_ex_out  : out RESULTS_EX_TYPE;
-        results_mem_out : out RESULTS_MEM_TYPE
+        ctrl_out        : out CTRL_TYPE
     );
 end stage_mem;
 
@@ -48,10 +45,10 @@ begin
         reset => reset,
         clock => clock,
         mem_dump => dump,
-        mem_address => results_ex_in.output,
+        mem_address => ctrl_in.alu_output,
         mem_write => mem_write,
-        mem_write_data => results_ex_in.passthrough,
-        mem_read_data => results_mem_out.output
+        mem_write_data => ctrl_in.alu_passthrough,
+        mem_read_data => ctrl_out.mem_output
     );
     
     --main behaviors
@@ -59,15 +56,28 @@ begin
     begin
         if falling_edge(clock) then
             if (reset = '1' or flush = '1' or ctrl_in.instruct_type = i_no_op) then
-                results_mem_out.output <= x"00000000";
-                ctrl_out.instruct_type <= i_no_op;
+                ctrl_out.pc                 <= x"00000000";
+                ctrl_out.instruction        <= x"00000000";
+                ctrl_out.instruct_type      <= i_no_op;
+                ctrl_out.exec_source        <= es_rs_rt;
+                ctrl_out.alu_op             <= alu_add;
+                ctrl_out.alu_output         <= x"00000000";
+                ctrl_out.alu_passthrough    <= x"00000000";
+                ctrl_out.write_reg_num      <= "00000";
+                
             else
-                --pass along the signals
-                ctrl_out <= ctrl_in;
-                results_ex_out <= results_ex_in;
+                --pass along the control signals
+                ctrl_out.pc                 <= ctrl_in.pc;
+                ctrl_out.instruction        <= ctrl_in.instruction;
+                ctrl_out.instruct_type      <= ctrl_in.instruct_type;
+                ctrl_out.exec_source        <= ctrl_in.exec_source;
+                ctrl_out.alu_op             <= ctrl_in.alu_op;
+                ctrl_out.alu_output         <= ctrl_in.alu_output;
+                ctrl_out.alu_passthrough    <= ctrl_in.alu_passthrough;
+                ctrl_out.write_reg_num      <= ctrl_in.write_reg_num;
+                
             end if;
         end if;
-        
     end process;
 
 end stage_mem_arch;

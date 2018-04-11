@@ -10,8 +10,7 @@ entity alu is
         op      : in ALU_OP_TYPE;
         input0  : in std_logic_vector(31 downto 0);
         input1  : in std_logic_vector(31 downto 0);
-        output  : out std_logic_vector(31 downto 0);
-        zero    : out std_logic
+        output  : out std_logic_vector(31 downto 0)
     );
 end alu;
 
@@ -34,9 +33,8 @@ begin
             r_hi <= x"00000000";
             r_lo <= x"00000000";
             output <= x"00000000";
-            zero <= '0';
+            
         else
-        
             case op is
                 --arithmatic
                 when alu_add => result := std_logic_vector(signed(input0) + signed(input1));
@@ -62,12 +60,12 @@ begin
                 when alu_or  => result := input0 or  input1;
                 when alu_nor => result := input0 nor input1;
                 when alu_xor => result := input0 xor input1;
-                    
+                
                 --transfer
                 when alu_hi => result := r_hi;
                 when alu_lo => result := r_lo;
                 when alu_lu => result := std_logic_vector(shift_left(unsigned(input0), 16));
-                    
+                
                 --shift
                 when alu_sll => result := std_logic_vector(shift_left(unsigned(input0), to_integer(unsigned(input1))));
                 when alu_srl => result := std_logic_vector(shift_right(unsigned(input0), to_integer(unsigned(input1))));
@@ -77,14 +75,7 @@ begin
             --set operation output
             output <= result;
             
-            --set the zero to true if the result of the operation is zero
-            if (result = x"00000000") then  
-                zero <= '1';
-            else
-                zero <= '0';
-            end if;
         end if;
-        
     end process;
     
 end alu_arch;
