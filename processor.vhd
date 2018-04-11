@@ -29,14 +29,8 @@ architecture processor_arch of processor is
     signal instruction  : std_logic_vector(31 downto 0);
     signal pc           : std_logic_vector(31 downto 0);
     
-    alias i_opcode      : std_logic_vector(5 downto 0) is instruction(31 downto 26);
     alias i_rs          : std_logic_vector(4 downto 0) is instruction(25 downto 21);
     alias i_rt          : std_logic_vector(4 downto 0) is instruction(20 downto 16);
-    alias i_rd          : std_logic_vector(4 downto 0) is instruction(15 downto 11);
-    alias i_shamt       : std_logic_vector(4 downto 0) is instruction(10 downto 6);
-    alias i_funct       : std_logic_vector(5 downto 0) is instruction(5 downto 0);
-    alias i_immediate   : std_logic_vector(15 downto 0) is instruction(15 downto 0);
-    alias i_address     : std_logic_vector(25 downto 0) is instruction(25 downto 0);
     
     --registers
     component registers
@@ -60,15 +54,16 @@ architecture processor_arch of processor is
     --decode stage
     component stage_id is
         port (
-            reset       : in std_logic;
-            clock       : in std_logic;
-			flush       : in std_logic;
-            instruction : in std_logic_vector(31 downto 0);
-            ctrl        : out CTRL_TYPE
+            reset           : in std_logic;
+            clock           : in std_logic;
+			flush           : in std_logic;
+            instruction     : in std_logic_vector(31 downto 0);
+            pc              : in std_logic_vector(31 downto 0);
+            ctrl            : out CTRL_TYPE
         );
     end component;
     
-    signal ctrl_ex      : CTRL_TYPE;
+    signal ctrl_ex  : CTRL_TYPE;
     
     --execution stage
     component stage_ex is
@@ -78,10 +73,6 @@ architecture processor_arch of processor is
 			flush       	: in std_logic;
             rs              : in std_logic_vector(31 downto 0);
             rt              : in std_logic_vector(31 downto 0);
-            samnt           : in std_logic_vector(4 downto 0);
-            immediate       : in std_logic_vector(15 downto 0);
-            address         : in std_logic_vector(25 downto 0);
-            pc              : in std_logic_vector(31 downto 0);
             ctrl_in         : in CTRL_TYPE;
             ctrl_out        : out CTRL_TYPE;
             results_ex_out  : out RESULTS_EX_TYPE
@@ -166,6 +157,7 @@ begin
         clock => clock,
 		flush => use_new_pc,
         instruction => instruction,
+        pc => pc,
         ctrl => ctrl_ex
     );
     
@@ -176,10 +168,6 @@ begin
 		flush => use_new_pc,
         rs => r_rs,
         rt => r_rt,
-        samnt => i_shamt,
-        immediate => i_immediate,
-        address => i_address,
-        pc => pc,
         ctrl_in => ctrl_ex,
         ctrl_out => ctrl_mem,
         results_ex_out => results_ex_mem

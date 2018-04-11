@@ -3,7 +3,6 @@
 # $1: n
 # $2: running product (output n!)
 
-Fact:   addi  $1, $0, 5         # input: n = 5
-        addi  $2, $0, 1         # initialize output to 1
-Loop:   addi  $0, $0, 0         # do nothing
-        j Loop                  # and loop
+Fact:   addi  $1, $1, 5         # input: n = 5
+        addi  $2, $1, 1         # initialize output to 1
+        j Fact                  # and loop

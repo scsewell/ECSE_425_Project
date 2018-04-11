@@ -8,11 +8,12 @@ use work.signals.all;
 --that will execute the expected behaviours for that instruction.
 entity stage_id is
     port (
-        reset       : in std_logic;
-        clock       : in std_logic;
-        flush       : in std_logic;
-        instruction : in std_logic_vector(31 downto 0);
-        ctrl        : out CTRL_TYPE
+        reset           : in std_logic;
+        clock           : in std_logic;
+        flush           : in std_logic;
+        instruction     : in std_logic_vector(31 downto 0);
+        pc              : in std_logic_vector(31 downto 0);
+        ctrl            : out CTRL_TYPE
     );
 end stage_id;
 
@@ -35,6 +36,10 @@ begin
         if falling_edge(clock) then
             if (reset = '1' or flush = '1') then
                 ctrl.instruct_type <= i_no_op;
+                ctrl.exec_source <= es_rs_rt;
+                ctrl.alu_op <= alu_add;
+                ctrl.write_reg_num <= "00000";
+                
             else
                 case opcode is
                     when "000000" => --R type instructions
@@ -207,7 +212,10 @@ begin
                     when others =>
                         ctrl.instruct_type <= i_no_op;
                 end case;
-            
+                
+                ctrl.instruction <= instruction;
+                ctrl.pc <= pc;
+                
             end if;
         end if;
     end process;

@@ -70,8 +70,8 @@ begin
                 end loop;
             end if;
             
-            --initizlize the first value in memory
-            mem_read_data <= ram_block(0);
+            --initizlize the output
+            mem_read_data <= x"00000000";
             
         elsif falling_edge(clock) then
             

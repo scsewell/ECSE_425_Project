@@ -58,10 +58,12 @@ package signals is
     --the type used to pass control and data signals between various stages of the pipeline
     type CTRL_TYPE is
         record
-            instruct_type   : INSTRUCTION_TYPE;
+            pc              : std_logic_vector(31 downto 0); --the program counter address when this instruction was fetched
+            instruction     : std_logic_vector(31 downto 0); --the instruction associated with the control signals
+            instruct_type   : INSTRUCTION_TYPE;              --the type of instruction
             exec_source     : EXEC_SOURCE_TYPE;
-            alu_op          : ALU_OP_TYPE;
-            write_reg_num   : std_logic_vector(4 downto 0);
+            alu_op          : ALU_OP_TYPE;                   --the alu operation used for this instruction
+            write_reg_num   : std_logic_vector(4 downto 0);  --the register to store the result of this operation
         end record;
     
     --the type used to pass execution stage output
@@ -70,7 +72,6 @@ package signals is
             output      : std_logic_vector(31 downto 0);
             zero        : std_logic;
             passthrough : std_logic_vector(31 downto 0);
-            pc          : std_logic_vector(31 downto 0);
         end record;
         
     --the type used to pass memory stage output
