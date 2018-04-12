@@ -9,7 +9,6 @@ entity stage_mem is
         reset           : in std_logic;
         clock           : in std_logic;
         dump            : in std_logic;
-        flush           : in std_logic;
         ctrl_in         : in CTRL_TYPE;
         ctrl_out        : out CTRL_TYPE
     );
@@ -38,7 +37,7 @@ architecture stage_mem_arch of stage_mem is
     
 begin
     
-    mem_write <= '1' when ctrl_in.instruct_type = i_write_mem else '0';
+    mem_write <= '1' when ctrl_in.instruct_type = i_sw else '0';
     
     --8192 words * 4 bytes/word = 32768 bytes
     main_memory_inst: memory generic map(false, 8192) port map (
@@ -47,7 +46,7 @@ begin
         mem_dump => dump,
         mem_address => ctrl_in.alu_output,
         mem_write => mem_write,
-        mem_write_data => ctrl_in.alu_passthrough,
+        mem_write_data => ctrl_in.mem_write_val,
         mem_read_data => ctrl_out.mem_output
     );
     
@@ -55,26 +54,24 @@ begin
     main_proc: process(clock)
     begin
         if falling_edge(clock) then
-            if (reset = '1' or flush = '1' or ctrl_in.instruct_type = i_no_op) then
-                ctrl_out.pc                 <= x"00000000";
-                ctrl_out.instruction        <= x"00000000";
-                ctrl_out.instruct_type      <= i_no_op;
-                ctrl_out.exec_source        <= es_rs_rt;
-                ctrl_out.alu_op             <= alu_add;
-                ctrl_out.alu_output         <= x"00000000";
-                ctrl_out.alu_passthrough    <= x"00000000";
-                ctrl_out.write_reg_num      <= "00000";
+            if (reset = '1' or ctrl_in.instruct_type = i_no_op) then
+                ctrl_out.pc             <= x"00000000";
+                ctrl_out.instruction    <= x"00000000";
+                ctrl_out.instruct_type  <= i_no_op;
+                ctrl_out.alu_op         <= alu_add;
+                ctrl_out.alu_output     <= x"00000000";
+                ctrl_out.mem_write_val  <= x"00000000";
+                ctrl_out.write_reg_num  <= "00000";
                 
             else
                 --pass along the control signals
-                ctrl_out.pc                 <= ctrl_in.pc;
-                ctrl_out.instruction        <= ctrl_in.instruction;
-                ctrl_out.instruct_type      <= ctrl_in.instruct_type;
-                ctrl_out.exec_source        <= ctrl_in.exec_source;
-                ctrl_out.alu_op             <= ctrl_in.alu_op;
-                ctrl_out.alu_output         <= ctrl_in.alu_output;
-                ctrl_out.alu_passthrough    <= ctrl_in.alu_passthrough;
-                ctrl_out.write_reg_num      <= ctrl_in.write_reg_num;
+                ctrl_out.pc             <= ctrl_in.pc;
+                ctrl_out.instruction    <= ctrl_in.instruction;
+                ctrl_out.instruct_type  <= ctrl_in.instruct_type;
+                ctrl_out.alu_op         <= ctrl_in.alu_op;
+                ctrl_out.alu_output     <= ctrl_in.alu_output;
+                ctrl_out.mem_write_val  <= ctrl_in.mem_write_val;
+                ctrl_out.write_reg_num  <= ctrl_in.write_reg_num;
                 
             end if;
         end if;

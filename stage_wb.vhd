@@ -8,10 +8,7 @@ entity stage_wb is
     port (
         reset           : in std_logic;
         clock           : in std_logic;
-        flush           : in std_logic;
         ctrl_in         : in CTRL_TYPE;
-        use_new_pc      : out std_logic;
-        new_pc          : out std_logic_vector(31 downto 0);
         write_reg       : out std_logic;
         write_reg_num   : out std_logic_vector(4 downto 0);
         write_reg_data  : out std_logic_vector(31 downto 0)
@@ -25,74 +22,27 @@ begin
     main_proc: process(clock)
     begin
         if falling_edge(clock) then
-            if (reset = '1' or flush = '1' or ctrl_in.instruct_type = i_no_op) then
-                --initialize outputs
-                use_new_pc <= '0';
-                new_pc <= x"00000000";
+            if (reset = '1' or ctrl_in.instruct_type = i_no_op) then
                 write_reg <= '0';
                 write_reg_num <= "00000";
                 write_reg_data <= x"00000000";
                 
             else
                 case ctrl_in.instruct_type is
-                    when i_no_op|i_write_hi_low|i_write_mem =>
-                        use_new_pc      <= '0';
-                        new_pc          <= x"00000000";
+                    when i_no_op|i_mult|i_div|i_sw|i_beq|i_bne|i_j|i_jr =>
                         write_reg       <= '0';
                         write_reg_num   <= "00000";
                         write_reg_data  <= x"00000000";
                         
-                    when i_write_reg =>
-                        use_new_pc      <= '0';
-                        new_pc          <= x"00000000";
+                    when i_add|i_sub|i_addi|i_slt|i_slti|i_and|i_or|i_nor|i_xor|i_andi|i_ori|i_xori|i_mfhi|i_mflo|i_lui|i_sll|i_srl|i_sra|i_jal =>
                         write_reg       <= '1';
                         write_reg_num   <= ctrl_in.write_reg_num;
                         write_reg_data  <= ctrl_in.alu_output;
                         
-                    when i_read_mem =>
-                        use_new_pc      <= '0';
-                        new_pc          <= x"00000000";
+                    when i_lw =>
                         write_reg       <= '1';
                         write_reg_num   <= ctrl_in.write_reg_num;
                         write_reg_data  <= ctrl_in.mem_output;
-                        
-                    when i_jump =>
-                        use_new_pc      <= '1';
-                        new_pc          <= ctrl_in.alu_passthrough;
-                        write_reg       <= '0';
-                        write_reg_num   <= "00000";
-                        write_reg_data  <= x"00000000";
-                        
-                    when i_jump_link =>
-                        use_new_pc      <= '1';
-                        new_pc          <= ctrl_in.alu_passthrough;
-                        write_reg       <= '1';
-                        write_reg_num   <= "11111"; --link register is $31
-                        write_reg_data  <= std_logic_vector(unsigned(ctrl_in.pc) + to_unsigned(8, 32));
-                        
-                    when i_branch_eq =>
-                        if (ctrl_in.alu_output = x"00000000") then
-                            use_new_pc  <= '1';
-                            new_pc      <= ctrl_in.alu_passthrough;
-                        else
-                            use_new_pc  <= '0';
-                            new_pc      <= x"00000000";
-                        end if;
-                        write_reg       <= '0';
-                        write_reg_num   <= "00000";
-                        write_reg_data  <= x"00000000";
-                        
-                    when i_branch_neq =>
-                        if (ctrl_in.alu_output = x"00000000") then
-                            use_new_pc  <= '0';
-                            new_pc      <= x"00000000";
-                        else
-                            use_new_pc  <= '1';
-                            new_pc      <= ctrl_in.alu_passthrough;
-                        end if;
-                        write_reg       <= '0';
-                        write_reg_num   <= "00000";
-                        write_reg_data  <= x"00000000";
                         
                 end case;
             end if;

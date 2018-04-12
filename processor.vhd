@@ -74,10 +74,14 @@ architecture processor_arch of processor is
             rs              : in std_logic_vector(31 downto 0);
             rt              : in std_logic_vector(31 downto 0);
             ctrl_in         : in CTRL_TYPE;
+            use_new_pc      : out std_logic;
+            new_pc          : out std_logic_vector(31 downto 0);
             ctrl_out        : out CTRL_TYPE
         );
     end component;
     
+    signal use_new_pc       : std_logic;
+    signal new_pc           : std_logic_vector(31 downto 0);
     signal ctrl_mem         : CTRL_TYPE;
     
     --memory stage
@@ -86,7 +90,6 @@ architecture processor_arch of processor is
             reset           : in std_logic;
             clock           : in std_logic;
             dump            : in std_logic;
-			flush       	: in std_logic;
             ctrl_in         : in CTRL_TYPE;
             ctrl_out        : out CTRL_TYPE
         );
@@ -99,18 +102,13 @@ architecture processor_arch of processor is
         port (
             reset           : in std_logic;
             clock           : in std_logic;
-			flush       	: in std_logic;
             ctrl_in         : in CTRL_TYPE;
-            use_new_pc      : out std_logic;
-            new_pc          : out std_logic_vector(31 downto 0);
             write_reg       : out std_logic;
             write_reg_num   : out std_logic_vector(4 downto 0);
             write_reg_data  : out std_logic_vector(31 downto 0)
         );
     end component;
     
-    signal use_new_pc       : std_logic;
-    signal new_pc           : std_logic_vector(31 downto 0);
     signal write_reg        : std_logic;
     signal write_reg_num    : std_logic_vector(4 downto 0);
     signal write_reg_data   : std_logic_vector(31 downto 0);
@@ -160,6 +158,8 @@ begin
         rs => r_rs,
         rt => r_rt,
         ctrl_in => ctrl_ex,
+        use_new_pc => use_new_pc,
+        new_pc => new_pc,
         ctrl_out => ctrl_mem
     );
     
@@ -168,7 +168,6 @@ begin
         reset => reset,
         clock => clock,
         dump => dump,
-		flush => use_new_pc,
         ctrl_in => ctrl_mem,
         ctrl_out => ctrl_wb
     );
@@ -177,10 +176,7 @@ begin
     stage_wb_inst: stage_wb port map (
         reset => reset,
         clock => clock,
-		flush => use_new_pc,
         ctrl_in => ctrl_wb,
-        use_new_pc => use_new_pc,
-        new_pc => new_pc,
         write_reg => write_reg,
         write_reg_num => write_reg_num,
         write_reg_data => write_reg_data
