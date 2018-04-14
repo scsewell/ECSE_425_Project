@@ -28,7 +28,7 @@ begin
         variable result : std_logic_vector(31 downto 0);
         
     begin
-        if reset = '1' then
+        if (reset = '1') then
             --initialize signals
             r_hi <= x"00000000";
             r_lo <= x"00000000";

@@ -16,14 +16,15 @@ architecture processor_arch of processor is
     --fetch stage
     component stage_if is
         port (
-            reset       : in std_logic;
-            clock       : in std_logic;
-            dump        : in std_logic;
-            stall       : in std_logic;
-            use_new_pc  : in std_logic;
-            new_pc      : in std_logic_vector(31 downto 0);
-            instruction : out std_logic_vector(31 downto 0);
-            pc          : out std_logic_vector(31 downto 0)
+            reset               : in std_logic;
+            clock               : in std_logic;
+            dump                : in std_logic;
+            stall               : in std_logic;
+            use_new_pc          : in std_logic;
+            new_pc              : in std_logic_vector(31 downto 0);
+            new_pc_src_address  : in std_logic_vector(31 downto 0);
+            instruction         : out std_logic_vector(31 downto 0);
+            pc                  : out std_logic_vector(31 downto 0)
         );
     end component;
     
@@ -78,21 +79,23 @@ architecture processor_arch of processor is
     --execution stage
     component stage_ex is
         port (
-            reset           : in std_logic;
-            clock           : in std_logic;
-			flush       	: in std_logic;
-            rs              : in std_logic_vector(31 downto 0);
-            rt              : in std_logic_vector(31 downto 0);
-            ctrl_in         : in CTRL_TYPE;
-            use_new_pc      : out std_logic;
-            new_pc          : out std_logic_vector(31 downto 0);
-            ctrl_out        : out CTRL_TYPE
+            reset               : in std_logic;
+            clock               : in std_logic;
+			flush       	    : in std_logic;
+            rs                  : in std_logic_vector(31 downto 0);
+            rt                  : in std_logic_vector(31 downto 0);
+            ctrl_in             : in CTRL_TYPE;
+            use_new_pc          : out std_logic;
+            new_pc              : out std_logic_vector(31 downto 0);
+            new_pc_src_address  : out std_logic_vector(31 downto 0);
+            ctrl_out            : out CTRL_TYPE
         );
     end component;
     
-    signal use_new_pc       : std_logic;
-    signal new_pc           : std_logic_vector(31 downto 0);
-    signal ctrl_mem         : CTRL_TYPE;
+    signal use_new_pc           : std_logic;
+    signal new_pc               : std_logic_vector(31 downto 0);
+    signal new_pc_src_address   : std_logic_vector(31 downto 0);
+    signal ctrl_mem             : CTRL_TYPE;
     
     --memory/write back stage
     component stage_mem is
@@ -127,6 +130,7 @@ begin
         stall => stall,
         use_new_pc => use_new_pc,
         new_pc => new_pc,
+        new_pc_src_address => new_pc_src_address,
         instruction => instruction,
         pc => pc
     );
@@ -173,6 +177,7 @@ begin
         rt => rt_value,
         ctrl_in => ctrl_ex,
         use_new_pc => use_new_pc,
+        new_pc_src_address => new_pc_src_address,
         new_pc => new_pc,
         ctrl_out => ctrl_mem
     );

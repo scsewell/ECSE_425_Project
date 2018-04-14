@@ -9,18 +9,9 @@ proc AddWaves {} {
     add wave -radix unsigned -position end sim:/testbench/processor_instance/stage_id_inst/ctrl
     add wave -radix unsigned -position end sim:/testbench/processor_instance/stage_ex_inst/ctrl_out
     add wave -radix unsigned -position end sim:/testbench/processor_instance/stage_mem_inst/ctrl_out
+    add wave -position end sim:/testbench/processor_instance/stage_if_inst/predictTable
     add wave -position end sim:/testbench/processor_instance/regs/reg_block
-    add wave -position end sim:/testbench/processor_instance/regs/reg_write_num
-    add wave -radix unsigned -position end sim:/testbench/processor_instance/stage_ex_inst/rs
-    add wave -radix unsigned -position end sim:/testbench/processor_instance/stage_ex_inst/rt
-    add wave -radix unsigned -position end sim:/testbench/processor_instance/regs/reg_read_num0
-    add wave -radix unsigned -position end sim:/testbench/processor_instance/regs/reg_read_num1
-    add wave -radix unsigned -position end sim:/testbench/processor_instance/regs/reg_write_alu_data
-    add wave -radix unsigned -position end sim:/testbench/processor_instance/regs/reg_write_alu
-    add wave -radix unsigned -position end sim:/testbench/processor_instance/regs/reg_write_alu_data
-    add wave -radix unsigned -position end sim:/testbench/processor_instance/regs/reg_write_mem
-    add wave -radix unsigned -position end sim:/testbench/processor_instance/regs/reg_write_mem_data
-    add wave -position end sim:/testbench/processor_instance/stage_mem_inst/main_memory_inst/ram_block
+    ;#add wave -position end sim:/testbench/processor_instance/stage_mem_inst/main_memory_inst/ram_block
 }
 
 vlib work

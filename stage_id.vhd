@@ -298,13 +298,13 @@ begin
                 --Check for hazards and stall if appropirate. If the registers holding
                 --required values are being modified by previous instructions, we must stall.
                 if (
-                    (src_reg1 /= "00000" and (
+                    (src_reg1 /= "00000" and (--is the first operand being set later in the pipeline?
                         src_reg1 = ctrl_ex.write_reg_num or
                         src_reg1 = ctrl_mem.write_reg_num or
                         src_reg1 = ctrl_wb.write_reg_num
                     ))
                     or
-                    (src_reg2 /= "00000" and (
+                    (src_reg2 /= "00000" and (--is the second operand being set later in the pipeline?
                         src_reg2 = ctrl_ex.write_reg_num or
                         src_reg2 = ctrl_mem.write_reg_num or
                         src_reg2 = ctrl_wb.write_reg_num

@@ -6,15 +6,16 @@ use work.signals.all;
 --Implements the execution stage of the pipeline.
 entity stage_ex is
     port (
-        reset           : in std_logic;
-        clock           : in std_logic;
-        flush           : in std_logic;
-        rs              : in std_logic_vector(31 downto 0);
-        rt              : in std_logic_vector(31 downto 0);
-        ctrl_in         : in CTRL_TYPE;
-        use_new_pc      : out std_logic;
-        new_pc          : out std_logic_vector(31 downto 0);
-        ctrl_out        : out CTRL_TYPE
+        reset               : in std_logic;
+        clock               : in std_logic;
+        flush               : in std_logic;
+        rs                  : in std_logic_vector(31 downto 0);
+        rt                  : in std_logic_vector(31 downto 0);
+        ctrl_in             : in CTRL_TYPE;
+        use_new_pc          : out std_logic;
+        new_pc              : out std_logic_vector(31 downto 0);
+        new_pc_src_address  : out std_logic_vector(31 downto 0);
+        ctrl_out            : out CTRL_TYPE
     );
 end stage_ex;
 
@@ -79,6 +80,7 @@ begin
                         ctrl_out.mem_write_val  <= x"00000000";
                         use_new_pc              <= '0';
                         new_pc                  <= x"00000000";
+                        new_pc_src_address      <= x"00000000";
                         
                     when i_sll|i_srl|i_sra =>
                         alu_in0                 <= rt;
@@ -86,6 +88,7 @@ begin
                         ctrl_out.mem_write_val  <= x"00000000";
                         use_new_pc              <= '0';
                         new_pc                  <= x"00000000";
+                        new_pc_src_address      <= x"00000000";
                         
                     when i_andi|i_ori|i_xori => 
                         alu_in0                 <= rs;
@@ -93,6 +96,7 @@ begin
                         ctrl_out.mem_write_val  <= x"00000000";
                         use_new_pc              <= '0';
                         new_pc                  <= x"00000000";
+                        new_pc_src_address      <= x"00000000";
                         
                     when i_addi|i_slti|i_lw =>
                         alu_in0                 <= rs;
@@ -100,6 +104,7 @@ begin
                         ctrl_out.mem_write_val  <= x"00000000";
                         use_new_pc              <= '0';
                         new_pc                  <= x"00000000";
+                        new_pc_src_address      <= x"00000000";
                         
                     when i_sw =>
                         alu_in0                 <= rs;
@@ -107,6 +112,7 @@ begin
                         ctrl_out.mem_write_val  <= rt;
                         use_new_pc              <= '0';
                         new_pc                  <= x"00000000";
+                        new_pc_src_address      <= x"00000000";
                         
                     when i_lui =>
                         alu_in0                 <= std_logic_vector(resize(signed(immediate), 32));
@@ -114,6 +120,7 @@ begin
                         ctrl_out.mem_write_val  <= x"00000000";
                         use_new_pc              <= '0';
                         new_pc                  <= x"00000000";
+                        new_pc_src_address      <= x"00000000";
                         
                     when i_beq =>
                         alu_in0                 <= x"00000000";
@@ -121,24 +128,28 @@ begin
                         ctrl_out.mem_write_val  <= x"00000000";
                         
                         if (rs = rt) then
-                            use_new_pc  <= '1';
-                            new_pc      <= std_logic_vector(to_unsigned(to_integer(unsigned(ctrl_in.pc)) + to_integer(signed(immediate & "00")), 32));
+                            use_new_pc          <= '1';
+                            new_pc              <= std_logic_vector(to_unsigned(to_integer(unsigned(ctrl_in.pc)) + 4 + to_integer(signed(immediate & "00")), 32));
+                            new_pc_src_address  <= ctrl_in.pc;
                         else
-                            use_new_pc  <= '0';
-                            new_pc      <= x"00000000";
+                            use_new_pc          <= '0';
+                            new_pc              <= x"00000000";
+                            new_pc_src_address  <= x"00000000";
                         end if;
-                            
+                        
                     when i_bne =>
                         alu_in0                 <= x"00000000";
                         alu_in1                 <= x"00000000";
                         ctrl_out.mem_write_val  <= x"00000000";
                         
                         if (rs = rt) then
-                            use_new_pc  <= '0';
-                            new_pc      <= x"00000000";
+                            use_new_pc          <= '0';
+                            new_pc              <= x"00000000";
+                            new_pc_src_address  <= x"00000000";
                         else
-                            use_new_pc  <= '1';
-                            new_pc      <= std_logic_vector(to_unsigned(to_integer(unsigned(ctrl_in.pc)) + to_integer(signed(immediate & "00")), 32));
+                            use_new_pc          <= '1';
+                            new_pc              <= std_logic_vector(to_unsigned(to_integer(unsigned(ctrl_in.pc)) + 4 + to_integer(signed(immediate & "00")), 32));
+                            new_pc_src_address  <= ctrl_in.pc;
                         end if;
                         
                     when i_j|i_jal =>
@@ -147,6 +158,7 @@ begin
                         ctrl_out.mem_write_val  <= x"00000000";
                         use_new_pc              <= '1';
                         new_pc                  <= ctrl_in.pc(31 downto 28) & address & "00";
+                        new_pc_src_address      <= ctrl_in.pc;
                         
                     when i_jr =>
                         alu_in0                 <= x"00000000";
@@ -154,6 +166,7 @@ begin
                         ctrl_out.mem_write_val  <= x"00000000";
                         use_new_pc              <= '1';
                         new_pc                  <= rs;
+                        new_pc_src_address      <= ctrl_in.pc;
                         
                 end case;
                 
