@@ -5,20 +5,23 @@ use work.signals.all;
 
 entity processor is
     port (
-        reset   : in std_logic;
-        clock   : in std_logic;
-        dump    : in std_logic
+        reset               : in std_logic;
+        clock               : in std_logic;
+        dump                : in std_logic;
+        use_branch_predict  : in std_logic --if true enables branch prediction
     );
 end processor;
 
 architecture processor_arch of processor is
     
+
     --fetch stage
     component stage_if is
         port (
             reset               : in std_logic;
             clock               : in std_logic;
             dump                : in std_logic;
+            use_branch_predict  : in std_logic;
             stall               : in std_logic;
             use_new_pc          : in std_logic;
             new_pc              : in std_logic_vector(31 downto 0);
@@ -80,6 +83,7 @@ architecture processor_arch of processor is
         port (
             reset               : in std_logic;
             clock               : in std_logic;
+            use_branch_predict  : in std_logic;
             rs                  : in std_logic_vector(31 downto 0);
             rt                  : in std_logic_vector(31 downto 0);
             ctrl_in             : in CTRL_TYPE;
@@ -125,6 +129,7 @@ begin
         reset => reset,
         clock => clock,
         dump => dump,
+        use_branch_predict => use_branch_predict,
         stall => stall,
         use_new_pc => use_new_pc,
         new_pc => new_pc,
@@ -169,6 +174,7 @@ begin
     stage_ex_inst: stage_ex port map (
         reset => reset,
         clock => clock,
+        use_branch_predict => use_branch_predict,
         rs => rs_value,
         rt => rt_value,
         ctrl_in => ctrl_ex,

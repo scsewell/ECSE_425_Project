@@ -8,6 +8,7 @@ entity stage_ex is
     port (
         reset               : in std_logic;
         clock               : in std_logic;
+        use_branch_predict  : in std_logic;
         rs                  : in std_logic_vector(31 downto 0);
         rt                  : in std_logic_vector(31 downto 0);
         ctrl_in             : in CTRL_TYPE;
@@ -89,8 +90,7 @@ begin
                 new_pc_2        <= x"00000000";
                 
             else
-                
-                if ((use_new_pc_1 = '1' and ctrl_in.pc /= new_pc_1) or ctrl_in.instruct_type = i_no_op) then
+                if ((use_new_pc_1 = '1' and (ctrl_in.pc /= new_pc_1 or use_branch_predict = '0')) or ctrl_in.instruct_type = i_no_op) then
                     alu_in0     <= x"00000000";
                     alu_in1     <= x"00000000";
                     use_new_pc  <= '0';

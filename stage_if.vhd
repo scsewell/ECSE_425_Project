@@ -10,6 +10,7 @@ entity stage_if is
         reset               : in std_logic;
         clock               : in std_logic;
         dump                : in std_logic;
+        use_branch_predict  : in std_logic;
         stall               : in std_logic;
         use_new_pc          : in std_logic;
         new_pc              : in std_logic_vector(31 downto 0);
@@ -94,14 +95,14 @@ begin
                 
                 --initialize the output
                 current_pc <= x"00000000";
-            
+                
             else
                 if (stall = '1') then
-                    --do not increment pc
+                    --do not increment pc when stalling to avoid skipping instructions
                     
-                else
+                elsif (use_branch_predict = '1') then
                     incrementCounter := '1';
-                
+                    
                     if (use_new_pc = '1') then
                         --access the entry in the branch prediction table associated with the branch instruction's address
                         entryIndex      := to_integer(unsigned(new_pc_src_address(8 downto 2)));
@@ -170,6 +171,14 @@ begin
                             current_pc <= std_logic_vector(unsigned(current_pc) + to_unsigned(4, 32));
                         
                         end if;
+                    end if;
+                
+                else
+                    --when branch prediction is disabled just to the obvious
+                    if (use_new_pc = '1') then
+                        current_pc <= new_pc;
+                    else
+                        current_pc <= std_logic_vector(unsigned(current_pc) + to_unsigned(4, 32));
                     end if;
                     
                 end if;
