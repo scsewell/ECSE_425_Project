@@ -26,7 +26,7 @@ public class Driver {
         read_from = getPath("Driver.java");
 	this_directory = read_from.substring(0, read_from.length() - ("Driver.java").length());
         read_from = this_directory + args[0];
-        write_to = "program.txt";
+        write_to = "../program.txt";
         Assembler.assemble(read_from, write_to);
     }
 

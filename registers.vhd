@@ -7,16 +7,18 @@ use std.textio.all;
 --R0 is always zero, even after attempting to write to it. 
 entity registers is
     port (
-        reset           : in std_logic;
-        clock           : in std_logic;
-        reg_dump        : in std_logic;
-        reg_write       : in std_logic;
-        reg_write_num   : in std_logic_vector(4 downto 0);
-        reg_write_data  : in std_logic_vector(31 downto 0);
-        reg_read_num0   : in std_logic_vector(4 downto 0);
-        reg_read_num1   : in std_logic_vector(4 downto 0);
-        reg_read_data0  : out std_logic_vector(31 downto 0);
-        reg_read_data1  : out std_logic_vector(31 downto 0)
+        reset               : in std_logic;
+        clock               : in std_logic;
+        reg_dump            : in std_logic;
+        reg_write_num       : in std_logic_vector(4 downto 0);
+        reg_write_alu       : in std_logic;
+        reg_write_alu_data  : in std_logic_vector(31 downto 0);
+        reg_write_mem       : in std_logic;
+        reg_write_mem_data  : in std_logic_vector(31 downto 0);
+        reg_read_num0       : in std_logic_vector(4 downto 0);
+        reg_read_num1       : in std_logic_vector(4 downto 0);
+        reg_read_data0      : out std_logic_vector(31 downto 0);
+        reg_read_data1      : out std_logic_vector(31 downto 0)
     );
 end registers;
 
@@ -28,30 +30,35 @@ architecture registers_arch of registers is
     
 begin
 
-    read_proc: process(reg_read_num0, reg_read_num1)
-    begin
-        --read the registers at the read addresses
-        reg_read_data0 <= reg_block(to_integer(unsigned(reg_read_num0)));
-        reg_read_data1 <= reg_block(to_integer(unsigned(reg_read_num1)));
-    end process;
-    
     --main behaviors
     write_proc: process(clock)
     begin
-        if reset = '1' then
-            --initialize all registers to zero
-            for i in 0 to 31 loop
-                reg_block(i) <= x"00000000";
-            end loop;
-            
-        elsif falling_edge(clock) then
-            --if writing store the word at the given register
-            if reg_write = '1' then
-                reg_block(to_integer(unsigned(reg_write_num))) <= reg_write_data;
+        if rising_edge(clock) then
+            if (reset = '1') then
+                --initialize all registers to zero
+                for i in 0 to 31 loop
+                    reg_block(i) <= x"00000000";
+                end loop;
+                
+                --initialize output
+                reg_read_data0 <= x"00000000";
+                reg_read_data1 <= x"00000000";
+                
+            else
+                --if writing store the word at the given register, unless the register is $0
+                if (reg_write_alu = '1' and reg_write_num /= "00000") then
+                    reg_block(to_integer(unsigned(reg_write_num))) <= reg_write_alu_data;
+                end if;
+                
+                if (reg_write_mem = '1' and reg_write_num /= "00000") then
+                    reg_block(to_integer(unsigned(reg_write_num))) <= reg_write_mem_data;
+                end if;
+                
+                --read the registers at the read addresses
+                reg_read_data0 <= reg_block(to_integer(unsigned(reg_read_num0)));
+                reg_read_data1 <= reg_block(to_integer(unsigned(reg_read_num1)));
+                
             end if;
-            
-            --make sure that R0 is always 0
-            reg_block(0) <= x"00000000";
         end if;
     end process;
     
@@ -73,6 +80,7 @@ begin
                 writeline(f_out, f_line);
             end loop;
             
+            --close the file
             file_close(f_out);
             
         end if;

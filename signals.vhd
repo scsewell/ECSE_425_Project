@@ -84,7 +84,6 @@ package signals is
             alu_op          : ALU_OP_TYPE;                   --the alu operation used for this instruction
             alu_output      : std_logic_vector(31 downto 0); --the output of the alu
             mem_write_val   : std_logic_vector(31 downto 0); --the value to write to memory
-            mem_output      : std_logic_vector(31 downto 0); --the output of the memory stage
             write_reg_num   : std_logic_vector(4 downto 0);  --the register to store the result of this operation
         end record;
     

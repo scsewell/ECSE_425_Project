@@ -1,0 +1,7 @@
+To use the processor, run the testbench.tcl file.
+The processor will load the program.txt file containing the program to run, assuming it is located in the same directory.
+
+After running the program, 3 files will be written to the directory:
+1) register_file.txt        Contains the register contents in accending order
+2) memory.txt               Contains the memory contents in accending order
+2) instructionMemory.txt    Contains the instruction memory contents in accending order

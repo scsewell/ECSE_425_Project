@@ -30,27 +30,26 @@ architecture processor_arch of processor is
     signal instruction  : std_logic_vector(31 downto 0);
     signal pc           : std_logic_vector(31 downto 0);
     
-    alias i_rs          : std_logic_vector(4 downto 0) is instruction(25 downto 21);
-    alias i_rt          : std_logic_vector(4 downto 0) is instruction(20 downto 16);
-    
     --registers
     component registers
         port (
-            reset           : in std_logic;
-            clock           : in std_logic;
-            reg_dump        : in std_logic;
-            reg_write       : in std_logic;
-            reg_write_num   : in std_logic_vector(4 downto 0);
-            reg_write_data  : in std_logic_vector(31 downto 0);
-            reg_read_num0   : in std_logic_vector(4 downto 0);
-            reg_read_num1   : in std_logic_vector(4 downto 0);
-            reg_read_data0  : out std_logic_vector(31 downto 0);
-            reg_read_data1  : out std_logic_vector(31 downto 0)
+            reset               : in std_logic;
+            clock               : in std_logic;
+            reg_dump            : in std_logic;
+            reg_write_num       : in std_logic_vector(4 downto 0);
+            reg_write_alu       : in std_logic;
+            reg_write_alu_data  : in std_logic_vector(31 downto 0);
+            reg_write_mem       : in std_logic;
+            reg_write_mem_data  : in std_logic_vector(31 downto 0);
+            reg_read_num0       : in std_logic_vector(4 downto 0);
+            reg_read_num1       : in std_logic_vector(4 downto 0);
+            reg_read_data0      : out std_logic_vector(31 downto 0);
+            reg_read_data1      : out std_logic_vector(31 downto 0)
         );
     end component;
     
-    signal r_rs   : std_logic_vector(31 downto 0);
-    signal r_rt   : std_logic_vector(31 downto 0);
+    signal rs_value     : std_logic_vector(31 downto 0);
+    signal rt_value     : std_logic_vector(31 downto 0);
     
     --decode stage
     component stage_id is
@@ -64,11 +63,15 @@ architecture processor_arch of processor is
             ctrl_ex         : in CTRL_TYPE;
             ctrl_mem        : in CTRL_TYPE;
             ctrl_wb         : in CTRL_TYPE;
+            rs_num          : out std_logic_vector(4 downto 0);
+            rt_num          : out std_logic_vector(4 downto 0);
             stall           : out std_logic;
             ctrl            : out CTRL_TYPE
         );
     end component;
     
+    signal rs_num   : std_logic_vector(4 downto 0);
+    signal rt_num   : std_logic_vector(4 downto 0);
     signal stall    : std_logic;
     signal ctrl_ex  : CTRL_TYPE;
     
@@ -91,34 +94,28 @@ architecture processor_arch of processor is
     signal new_pc           : std_logic_vector(31 downto 0);
     signal ctrl_mem         : CTRL_TYPE;
     
-    --memory stage
+    --memory/write back stage
     component stage_mem is
         port (
             reset           : in std_logic;
             clock           : in std_logic;
             dump            : in std_logic;
             ctrl_in         : in CTRL_TYPE;
+            write_reg_num   : out std_logic_vector(4 downto 0);
+            write_alu_reg   : out std_logic;
+            write_alu_data  : out std_logic_vector(31 downto 0);
+            write_mem_reg   : out std_logic;
+            write_mem_data  : out std_logic_vector(31 downto 0);
             ctrl_out        : out CTRL_TYPE
         );
     end component;
     
-    signal ctrl_wb         : CTRL_TYPE;
-    
-    --write back stage
-    component stage_wb is
-        port (
-            reset           : in std_logic;
-            clock           : in std_logic;
-            ctrl_in         : in CTRL_TYPE;
-            write_reg       : out std_logic;
-            write_reg_num   : out std_logic_vector(4 downto 0);
-            write_reg_data  : out std_logic_vector(31 downto 0)
-        );
-    end component;
-    
-    signal write_reg        : std_logic;
     signal write_reg_num    : std_logic_vector(4 downto 0);
-    signal write_reg_data   : std_logic_vector(31 downto 0);
+    signal write_alu_reg    : std_logic;
+    signal write_alu_data   : std_logic_vector(31 downto 0);
+    signal write_mem_reg    : std_logic;
+    signal write_mem_data   : std_logic_vector(31 downto 0);
+    signal ctrl_wb          : CTRL_TYPE;
     
 begin
 
@@ -134,20 +131,6 @@ begin
         pc => pc
     );
     
-    --registers
-    regs: registers port map (
-        reset => reset,
-        clock => clock,
-        reg_dump => dump,
-        reg_write => write_reg,
-        reg_write_num => write_reg_num,
-        reg_write_data => write_reg_data,
-        reg_read_num0 => i_rs,
-        reg_read_num1 => i_rt,
-        reg_read_data0 => r_rs,
-        reg_read_data1 => r_rt
-    );
-    
     --instruction decode stage
     stage_id_inst: stage_id port map (
         reset => reset,
@@ -159,8 +142,26 @@ begin
         ctrl_ex => ctrl_ex,
         ctrl_mem => ctrl_mem,
         ctrl_wb => ctrl_wb,
+        rs_num => rs_num,
+        rt_num => rt_num,
         stall => stall,
         ctrl => ctrl_ex
+    );
+    
+    --registers
+    regs: registers port map (
+        reset => reset,
+        clock => clock,
+        reg_dump => dump,
+        reg_write_num => write_reg_num,
+        reg_write_alu => write_alu_reg,
+        reg_write_alu_data => write_alu_data,
+        reg_write_mem => write_mem_reg,
+        reg_write_mem_data => write_mem_data,
+        reg_read_num0 => rs_num,
+        reg_read_num1 => rt_num,
+        reg_read_data0 => rs_value,
+        reg_read_data1 => rt_value
     );
     
     --execution stage
@@ -168,31 +169,26 @@ begin
         reset => reset,
         clock => clock,
 		flush => use_new_pc,
-        rs => r_rs,
-        rt => r_rt,
+        rs => rs_value,
+        rt => rt_value,
         ctrl_in => ctrl_ex,
         use_new_pc => use_new_pc,
         new_pc => new_pc,
         ctrl_out => ctrl_mem
     );
     
-    --memory stage
+    --memory/write back stage
     stage_mem_inst: stage_mem port map (
         reset => reset,
         clock => clock,
         dump => dump,
         ctrl_in => ctrl_mem,
-        ctrl_out => ctrl_wb
-    );
-    
-    --write back stage
-    stage_wb_inst: stage_wb port map (
-        reset => reset,
-        clock => clock,
-        ctrl_in => ctrl_wb,
-        write_reg => write_reg,
         write_reg_num => write_reg_num,
-        write_reg_data => write_reg_data
+        write_alu_reg => write_alu_reg,
+        write_alu_data => write_alu_data,
+        write_mem_reg => write_mem_reg,
+        write_mem_data => write_mem_data,
+        ctrl_out => ctrl_wb
     );
     
 end processor_arch;

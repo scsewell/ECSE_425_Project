@@ -17,6 +17,8 @@ entity stage_id is
         ctrl_ex         : in CTRL_TYPE;
         ctrl_mem        : in CTRL_TYPE;
         ctrl_wb         : in CTRL_TYPE;
+        rs_num          : out std_logic_vector(4 downto 0);
+        rt_num          : out std_logic_vector(4 downto 0);
         stall           : out std_logic;
         ctrl            : out CTRL_TYPE
     );
@@ -54,8 +56,11 @@ begin
         if falling_edge(clock) then
             if (reset = '1' or flush = '1') then
                 
+                last_pc             <= x"00000000";
                 last_instruct       <= x"00000000";
                 stall               <= '0';
+                rs_num              <= "00000";
+                rt_num              <= "00000";
                 
                 ctrl.pc             <= x"00000000";
                 ctrl.instruction    <= x"00000000";
@@ -63,7 +68,6 @@ begin
                 ctrl.alu_op         <= alu_add;
                 ctrl.alu_output     <= x"00000000";
                 ctrl.mem_write_val  <= x"00000000";
-                ctrl.mem_output     <= x"00000000";
                 ctrl.write_reg_num  <= "00000";
                 
             else
@@ -142,21 +146,21 @@ begin
                                 src_reg1       := rs;
                                 src_reg2       := rt;
                                 
-                            when "101000" => --XOR
+                            when "100110" => --XOR
                                 instruct_type  := i_xor;
                                 alu_op         := alu_xor;
                                 write_reg_num  := rd;
                                 src_reg1       := rs;
                                 src_reg2       := rt;
                                 
-                            when "001010" => --MFHI
+                            when "010000" => --MFHI
                                 instruct_type  := i_mfhi;
                                 alu_op         := alu_hi;
                                 write_reg_num  := rd;
                                 src_reg1       := "00000";
                                 src_reg2       := "00000";
                                 
-                            when "001100" => --MFLO
+                            when "010010" => --MFLO
                                 instruct_type  := i_mflo;
                                 alu_op         := alu_lo;
                                 write_reg_num  := rd;
@@ -253,7 +257,7 @@ begin
                         alu_op         := alu_add;
                         write_reg_num  := "00000";
                         src_reg1       := rs;
-                        src_reg2       := "00000";
+                        src_reg2       := rt;
                     
                     when "000100" => --BEQ
                         instruct_type  := i_beq;
@@ -291,8 +295,8 @@ begin
                         src_reg2       := "00000";
                 end case;
                 
-                --check for hazards and stall if appropirate
-                --if the registers holding required values are being modified by previous instructions, we must stall
+                --Check for hazards and stall if appropirate. If the registers holding
+                --required values are being modified by previous instructions, we must stall.
                 if (
                     (src_reg1 /= "00000" and (
                         src_reg1 = ctrl_ex.write_reg_num or
@@ -317,6 +321,10 @@ begin
                     var_pc          := current_pc;
                     var_instruct    := current_instruction;
                 end if;
+                
+                --output the registers to pass data from
+                rs_num <= rs;
+                rt_num <= rt;
                 
                 --assign signals for next stage
                 ctrl.pc             <= var_pc;

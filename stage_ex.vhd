@@ -69,7 +69,6 @@ begin
                 ctrl_out.instruct_type      <= i_no_op;
                 ctrl_out.alu_op             <= alu_add;
                 ctrl_out.mem_write_val      <= x"00000000";
-                ctrl_out.mem_output         <= x"00000000";
                 ctrl_out.write_reg_num      <= "00000";
                 
             else
@@ -163,7 +162,6 @@ begin
                 ctrl_out.instruction        <= ctrl_in.instruction;
                 ctrl_out.instruct_type      <= ctrl_in.instruct_type;
                 ctrl_out.alu_op             <= ctrl_in.alu_op;
-                ctrl_out.mem_output         <= ctrl_in.mem_output;
                 ctrl_out.write_reg_num      <= ctrl_in.write_reg_num;
                 
                 alu_op <= ctrl_in.alu_op;

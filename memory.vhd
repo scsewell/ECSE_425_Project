@@ -43,46 +43,50 @@ begin
         variable f_lineVal  : bit_vector(31 downto 0);
         
     begin
-        if reset = '1' then
-        
-            --if this is instruction memory open the program file and read the instructions
-            if is_instruction then
-                --open the program file
-                file_open(f_in, "program.txt", read_mode);
-                
-                for i in 0 to ram_size-1 loop
-                    --while there is a new line in the program load it into memory, otherwise initialize to 0
-                    if not endfile(f_in) then
-                        readline(f_in, f_line);
-                        read(f_line, f_lineVal);
-                        ram_block(i) <= to_stdlogicvector(f_lineVal);
-                    else
+        if rising_edge(clock) then
+            if (reset = '1') then
+                --if this is instruction memory open the program file and read the instructions
+                if is_instruction then
+                    --open the program file
+                    file_open(f_in, "program.txt", read_mode);
+                    
+                    for i in 0 to ram_size-1 loop
+                        --while there is a new line in the program load it into memory, otherwise initialize to 0
+                        if not endfile(f_in) then
+                            readline(f_in, f_line);
+                            read(f_line, f_lineVal);
+                            ram_block(i) <= to_stdlogicvector(f_lineVal);
+                        else
+                            ram_block(i) <= x"00000000";
+                        end if;
+                    end loop;
+                    
+                    --close the program file
+                    file_close(f_in);
+                    
+                else
+                    --initialize all entries to zero in main memory
+                    for i in 0 to ram_size-1 loop
                         ram_block(i) <= x"00000000";
-                    end if;
-                end loop;
-                --close the program file
-                file_close(f_in);
+                    end loop;
+                end if;
+                
+                --initizlize the output
+                mem_read_data <= x"00000000";
                 
             else
-                --initialize all entries to zero in main memory
-                for i in 0 to ram_size-1 loop
-                    ram_block(i) <= x"00000000";
-                end loop;
-            end if;
-            
-            --initizlize the output
-            mem_read_data <= x"00000000";
-            
-        elsif rising_edge(clock) then
-            
-            --if writing store the word at the current address
-            if mem_write = '1' then
-                ram_block(to_integer(address_index)) <= mem_write_data;
-            end if;
-            
-            --read the word at the current address if the address is valid
-            if to_integer(address_index) < ram_size then
-                mem_read_data <= ram_block(to_integer(address_index));
+                --if writing store the word at the current address
+                if (mem_write = '1') then
+                    ram_block(to_integer(address_index)) <= mem_write_data;
+                end if;
+                
+                --read the word at the current address if the address is valid
+                if (to_integer(address_index) < ram_size) then
+                    mem_read_data <= ram_block(to_integer(address_index));
+                else
+                    mem_read_data <= x"00000000";
+                end if;
+                
             end if;
         end if;
     end process;
@@ -110,6 +114,7 @@ begin
                 writeline(f_out, f_line);
             end loop;
             
+            --close the file
             file_close(f_out);
             
         end if;
