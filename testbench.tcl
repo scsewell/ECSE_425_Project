@@ -3,11 +3,12 @@ proc AddWaves {} {
     add wave -position end sim:/testbench/clock
     add wave -position end sim:/testbench/reset
     add wave -position end sim:/testbench/dump
-    add wave -radix unsigned -position end sim:/testbench/processor_instance/stage_if_inst/pc_address
+    add wave -radix unsigned -position end sim:/testbench/processor_instance/stage_if_inst/current_pc
     add wave -radix binary -position end sim:/testbench/processor_instance/stage_id_inst/instruction
     add wave -radix unsigned -position end sim:/testbench/processor_instance/stage_ex_inst/ctrl_in
     add wave -radix unsigned -position end sim:/testbench/processor_instance/stage_mem_inst/ctrl_in
     add wave -radix unsigned -position end sim:/testbench/processor_instance/stage_wb_inst/ctrl_in
+    add wave -position end sim:/testbench/processor_instance/stage_id_inst/stall
     add wave -position end sim:/testbench/processor_instance/regs/reg_write
     add wave -radix unsigned -position end sim:/testbench/processor_instance/regs/reg_write_num
     add wave -radix unsigned -position end sim:/testbench/processor_instance/regs/reg_write_data

@@ -27,8 +27,16 @@ architecture registers_arch of registers is
     signal reg_block: Regs;
     
 begin
+
+    read_proc: process(reg_read_num0, reg_read_num1)
+    begin
+        --read the registers at the read addresses
+        reg_read_data0 <= reg_block(to_integer(unsigned(reg_read_num0)));
+        reg_read_data1 <= reg_block(to_integer(unsigned(reg_read_num1)));
+    end process;
+    
     --main behaviors
-    main_proc: process(clock)
+    write_proc: process(clock)
     begin
         if reset = '1' then
             --initialize all registers to zero
@@ -44,10 +52,6 @@ begin
             
             --make sure that R0 is always 0
             reg_block(0) <= x"00000000";
-            
-            --read the registers at the read addresses
-            reg_read_data0 <= reg_block(to_integer(unsigned(reg_read_num0)));
-            reg_read_data1 <= reg_block(to_integer(unsigned(reg_read_num1)));
         end if;
     end process;
     
@@ -73,6 +77,5 @@ begin
             
         end if;
     end process;
-    
     
 end registers_arch;

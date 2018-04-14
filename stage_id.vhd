@@ -11,34 +11,52 @@ entity stage_id is
         reset           : in std_logic;
         clock           : in std_logic;
         flush           : in std_logic;
-        instruction     : in std_logic_vector(31 downto 0);
         pc              : in std_logic_vector(31 downto 0);
-        --ctrl_ex         : in CTRL_TYPE;
-        --ctrl_mem        : in CTRL_TYPE;
-        --ctrl_wb         : in CTRL_TYPE;
+        instruction     : in std_logic_vector(31 downto 0);
+        stall_in        : in std_logic;
+        ctrl_ex         : in CTRL_TYPE;
+        ctrl_mem        : in CTRL_TYPE;
+        ctrl_wb         : in CTRL_TYPE;
+        stall           : out std_logic;
         ctrl            : out CTRL_TYPE
     );
 end stage_id;
 
 architecture stage_id_arch of stage_id is
     
-    --extract the different parts of the instruction
-    alias opcode      : std_logic_vector(5 downto 0) is instruction(31 downto 26);
-    alias rs          : std_logic_vector(4 downto 0) is instruction(25 downto 21);
-    alias rt          : std_logic_vector(4 downto 0) is instruction(20 downto 16);
-    alias rd          : std_logic_vector(4 downto 0) is instruction(15 downto 11);
-    alias shamt       : std_logic_vector(4 downto 0) is instruction(10 downto 6);
-    alias funct       : std_logic_vector(5 downto 0) is instruction(5 downto 0);
-    alias immediate   : std_logic_vector(15 downto 0) is instruction(15 downto 0);
-    alias address     : std_logic_vector(25 downto 0) is instruction(25 downto 0);
+    signal last_pc          : std_logic_vector(31 downto 0);
+    signal last_instruct    : std_logic_vector(31 downto 0);
     
 begin
 
     --main behaviors
     main_proc: process(clock, reset, flush)
+    
+        variable current_pc             : std_logic_vector(31 downto 0);
+        variable current_instruction    : std_logic_vector(31 downto 0);
+        
+        --extract the different parts of the instruction
+        alias opcode    : std_logic_vector(5 downto 0) is current_instruction(31 downto 26);
+        alias rs        : std_logic_vector(4 downto 0) is current_instruction(25 downto 21);
+        alias rt        : std_logic_vector(4 downto 0) is current_instruction(20 downto 16);
+        alias rd        : std_logic_vector(4 downto 0) is current_instruction(15 downto 11);
+        alias funct     : std_logic_vector(5 downto 0) is current_instruction(5 downto 0);
+        
+        variable var_pc         : std_logic_vector(31 downto 0);
+        variable var_instruct   : std_logic_vector(31 downto 0);
+        variable instruct_type  : INSTRUCTION_TYPE;
+        variable alu_op         : ALU_OP_TYPE;
+        variable write_reg_num  : std_logic_vector(4 downto 0);
+        variable src_reg1       : std_logic_vector(4 downto 0);
+        variable src_reg2       : std_logic_vector(4 downto 0);
+        
     begin
         if falling_edge(clock) then
             if (reset = '1' or flush = '1') then
+                
+                last_instruct       <= x"00000000";
+                stall               <= '0';
+                
                 ctrl.pc             <= x"00000000";
                 ctrl.instruction    <= x"00000000";
                 ctrl.instruct_type  <= i_no_op;
@@ -49,156 +67,267 @@ begin
                 ctrl.write_reg_num  <= "00000";
                 
             else
+                --get the current instruction
+                if (stall_in = '1') then
+                    current_pc          := last_pc;
+                    current_instruction := last_instruct;
+                else 
+                    current_pc          := pc;
+                    current_instruction := instruction;
+                end if;
+                
+                --if the instruction is zero empty make sure it will no-op using an invalid code
+                --(since usually it will interpret a 0 instruction as a sll on $0 by 0)
+                if (current_instruction = x"00000000") then
+                    current_instruction := x"FFFFFFFF";
+                end if;
+                
+                --decode the instruction and determine approprite control signals
                 case opcode is
                     when "000000" => --R type instructions
-                    
                         case funct is
                             when "100000" => --ADD
-                                ctrl.instruct_type  <= i_add;
-                                ctrl.alu_op         <= alu_add;
-                                ctrl.write_reg_num  <= rd;
+                                instruct_type  := i_add;
+                                alu_op         := alu_add;
+                                write_reg_num  := rd;
+                                src_reg1       := rs;
+                                src_reg2       := rt;
                                 
                             when "100010" => --SUB
-                                ctrl.instruct_type  <= i_sub;
-                                ctrl.alu_op         <= alu_sub;
-                                ctrl.write_reg_num  <= rd;
+                                instruct_type  := i_sub;
+                                alu_op         := alu_sub;
+                                write_reg_num  := rd;
+                                src_reg1       := rs;
+                                src_reg2       := rt;
                                 
                             when "011000" => --MUL
-                                ctrl.instruct_type  <= i_mult;
-                                ctrl.alu_op         <= alu_mul;
-                                ctrl.write_reg_num  <= "00000";
+                                instruct_type  := i_mult;
+                                alu_op         := alu_mul;
+                                write_reg_num  := "00000";
+                                src_reg1       := rs;
+                                src_reg2       := rt;
                                 
                             when "011010" => --DIV
-                                ctrl.instruct_type  <= i_div;
-                                ctrl.alu_op         <= alu_div;
-                                ctrl.write_reg_num  <= "00000";
+                                instruct_type  := i_div;
+                                alu_op         := alu_div;
+                                write_reg_num  := "00000";
+                                src_reg1       := rs;
+                                src_reg2       := rt;
                                 
                             when "101010" => --SLT
-                                ctrl.instruct_type  <= i_slt;
-                                ctrl.alu_op         <= alu_slt;
-                                ctrl.write_reg_num  <= rd;
+                                instruct_type  := i_slt;
+                                alu_op         := alu_slt;
+                                write_reg_num  := rd;
+                                src_reg1       := rs;
+                                src_reg2       := rt;
                                 
                             when "100100" => --AND
-                                ctrl.instruct_type  <= i_and;
-                                ctrl.alu_op         <= alu_and;
-                                ctrl.write_reg_num  <= rd;
+                                instruct_type  := i_and;
+                                alu_op         := alu_and;
+                                write_reg_num  := rd;
+                                src_reg1       := rs;
+                                src_reg2       := rt;
                                 
                             when "100101" => --OR
-                                ctrl.instruct_type  <= i_or;
-                                ctrl.alu_op         <= alu_or;
-                                ctrl.write_reg_num  <= rd;
+                                instruct_type  := i_or;
+                                alu_op         := alu_or;
+                                write_reg_num  := rd;
+                                src_reg1       := rs;
+                                src_reg2       := rt;
                                 
                             when "100111" => --NOR
-                                ctrl.instruct_type  <= i_nor;
-                                ctrl.alu_op         <= alu_nor;
-                                ctrl.write_reg_num  <= rd;
+                                instruct_type  := i_nor;
+                                alu_op         := alu_nor;
+                                write_reg_num  := rd;
+                                src_reg1       := rs;
+                                src_reg2       := rt;
                                 
                             when "101000" => --XOR
-                                ctrl.instruct_type  <= i_xor;
-                                ctrl.alu_op         <= alu_xor;
-                                ctrl.write_reg_num  <= rd;
+                                instruct_type  := i_xor;
+                                alu_op         := alu_xor;
+                                write_reg_num  := rd;
+                                src_reg1       := rs;
+                                src_reg2       := rt;
                                 
                             when "001010" => --MFHI
-                                ctrl.instruct_type  <= i_mfhi;
-                                ctrl.alu_op         <= alu_hi;
-                                ctrl.write_reg_num  <= rd;
+                                instruct_type  := i_mfhi;
+                                alu_op         := alu_hi;
+                                write_reg_num  := rd;
+                                src_reg1       := "00000";
+                                src_reg2       := "00000";
                                 
                             when "001100" => --MFLO
-                                ctrl.instruct_type  <= i_mflo;
-                                ctrl.alu_op         <= alu_lo;
-                                ctrl.write_reg_num  <= rd;
+                                instruct_type  := i_mflo;
+                                alu_op         := alu_lo;
+                                write_reg_num  := rd;
+                                src_reg1       := "00000";
+                                src_reg2       := "00000";
                                 
                             when "000000" => --SLL
-                                ctrl.instruct_type  <= i_sll;
-                                ctrl.alu_op         <= alu_sll;
-                                ctrl.write_reg_num  <= rd;
+                                instruct_type  := i_sll;
+                                alu_op         := alu_sll;
+                                write_reg_num  := rd;
+                                src_reg1       := rt;
+                                src_reg2       := "00000";
                                 
                             when "000010" => --SRL
-                                ctrl.instruct_type  <= i_srl;
-                                ctrl.alu_op         <= alu_srl;
-                                ctrl.write_reg_num  <= rd;
+                                instruct_type  := i_srl;
+                                alu_op         := alu_srl;
+                                write_reg_num  := rd;
+                                src_reg1       := rt;
+                                src_reg2       := "00000";
                                 
                             when "000011" => --SRA
-                                ctrl.instruct_type  <= i_sra;
-                                ctrl.alu_op         <= alu_sra;
-                                ctrl.write_reg_num  <= rd;
+                                instruct_type  := i_sra;
+                                alu_op         := alu_sra;
+                                write_reg_num  := rd;
+                                src_reg1       := rt;
+                                src_reg2       := "00000";
                                 
                             when "001000" => --JR
-                                ctrl.instruct_type  <= i_jr;
-                                ctrl.alu_op         <= alu_add;
-                                ctrl.write_reg_num  <= "00000";
+                                instruct_type  := i_jr;
+                                alu_op         := alu_add;
+                                write_reg_num  := "00000";
+                                src_reg1       := rs;
+                                src_reg2       := "00000";
                                 
                             when others =>
-                                ctrl.instruct_type  <= i_no_op;
+                                instruct_type  := i_no_op;
+                                alu_op         := alu_add;
+                                write_reg_num  := "00000";
+                                src_reg1       := "00000";
+                                src_reg2       := "00000";
                         end case;
                     
                     when "001000" => --ADDI
-                        ctrl.instruct_type  <= i_addi;
-                        ctrl.alu_op         <= alu_add;
-                        ctrl.write_reg_num  <= rt;
+                        instruct_type  := i_addi;
+                        alu_op         := alu_add;
+                        write_reg_num  := rt;
+                        src_reg1       := rs;
+                        src_reg2       := "00000";
                     
                     when "001010" => --SLTI
-                        ctrl.instruct_type  <= i_slti;
-                        ctrl.alu_op         <= alu_slt;
-                        ctrl.write_reg_num  <= rt;
+                        instruct_type  := i_slti;
+                        alu_op         := alu_slt;
+                        write_reg_num  := rt;
+                        src_reg1       := rs;
+                        src_reg2       := "00000";
                     
                     when "001100" => --ANDI
-                        ctrl.instruct_type  <= i_andi;
-                        ctrl.alu_op         <= alu_and;
-                        ctrl.write_reg_num  <= rt;
+                        instruct_type  := i_andi;
+                        alu_op         := alu_and;
+                        write_reg_num  := rt;
+                        src_reg1       := rs;
+                        src_reg2       := "00000";
                     
                     when "001101" => --ORI
-                        ctrl.instruct_type  <= i_ori;
-                        ctrl.alu_op         <= alu_or;
-                        ctrl.write_reg_num  <= rt;
+                        instruct_type  := i_ori;
+                        alu_op         := alu_or;
+                        write_reg_num  := rt;
+                        src_reg1       := rs;
+                        src_reg2       := "00000";
                     
                     when "001110" => --XORI
-                        ctrl.instruct_type  <= i_xori;
-                        ctrl.alu_op         <= alu_xor;
-                        ctrl.write_reg_num  <= rt;
+                        instruct_type  := i_xori;
+                        alu_op         := alu_xor;
+                        write_reg_num  := rt;
+                        src_reg1       := rs;
+                        src_reg2       := "00000";
                     
                     when "001111" => --LUI
-                        ctrl.instruct_type  <= i_lui;
-                        ctrl.alu_op         <= alu_lu;
-                        ctrl.write_reg_num  <= rt;
+                        instruct_type  := i_lui;
+                        alu_op         := alu_lu;
+                        write_reg_num  := rt;
+                        src_reg1       := "00000";
+                        src_reg2       := "00000";
                     
                     when "100011" => --LW
-                        ctrl.instruct_type  <= i_lw;
-                        ctrl.alu_op         <= alu_add;
-                        ctrl.write_reg_num  <= rt;
+                        instruct_type  := i_lw;
+                        alu_op         := alu_add;
+                        write_reg_num  := rt;
+                        src_reg1       := rs;
+                        src_reg2       := "00000";
                     
                     when "101011" => --SW
-                        ctrl.instruct_type  <= i_sw;
-                        ctrl.alu_op         <= alu_add;
-                        ctrl.write_reg_num  <= "00000";
+                        instruct_type  := i_sw;
+                        alu_op         := alu_add;
+                        write_reg_num  := "00000";
+                        src_reg1       := rs;
+                        src_reg2       := "00000";
                     
                     when "000100" => --BEQ
-                        ctrl.instruct_type  <= i_beq;
-                        ctrl.alu_op         <= alu_sub;
-                        ctrl.write_reg_num  <= "00000";
+                        instruct_type  := i_beq;
+                        alu_op         := alu_sub;
+                        write_reg_num  := "00000";
+                        src_reg1       := rs;
+                        src_reg2       := rt;
                     
                     when "000101" => --BNE
-                        ctrl.instruct_type  <= i_bne;
-                        ctrl.alu_op         <= alu_sub;
-                        ctrl.write_reg_num  <= "00000";
+                        instruct_type  := i_bne;
+                        alu_op         := alu_sub;
+                        write_reg_num  := "00000";
+                        src_reg1       := rs;
+                        src_reg2       := rt;
                     
                     when "000010" => --J
-                        ctrl.instruct_type  <= i_j;
-                        ctrl.alu_op         <= alu_add;
-                        ctrl.write_reg_num  <= "00000";
+                        instruct_type  := i_j;
+                        alu_op         := alu_add;
+                        write_reg_num  := "00000";
+                        src_reg1       := "00000";
+                        src_reg2       := "00000";
                     
                     when "000011" => --JAL
-                        ctrl.instruct_type  <= i_jal;
-                        ctrl.alu_op         <= alu_add;
-                        ctrl.write_reg_num  <= "11111"; --link register is $31
+                        instruct_type  := i_jal;
+                        alu_op         := alu_add;
+                        write_reg_num  := "11111"; --link register is $31
+                        src_reg1       := "00000";
+                        src_reg2       := "00000";
                     
                     when others =>
-                        ctrl.instruct_type  <= i_no_op;
+                        instruct_type  := i_no_op;
+                        alu_op         := alu_add;
+                        write_reg_num  := "00000";
+                        src_reg1       := "00000";
+                        src_reg2       := "00000";
                 end case;
                 
-                --pass the source instruction and instruction address
-                ctrl.pc <= pc;
-                ctrl.instruction <= instruction;
+                --check for hazards and stall if appropirate
+                --if the registers holding required values are being modified by previous instructions, we must stall
+                if (
+                    (src_reg1 /= "00000" and (
+                        src_reg1 = ctrl_ex.write_reg_num or
+                        src_reg1 = ctrl_mem.write_reg_num or
+                        src_reg1 = ctrl_wb.write_reg_num
+                    ))
+                    or
+                    (src_reg2 /= "00000" and (
+                        src_reg2 = ctrl_ex.write_reg_num or
+                        src_reg2 = ctrl_mem.write_reg_num or
+                        src_reg2 = ctrl_wb.write_reg_num
+                    ))
+                    ) then
+                    stall           <= '1';
+                    instruct_type   := i_no_op;
+                    alu_op          := alu_add;
+                    write_reg_num   := "00000";
+                    var_pc          := x"00000000";
+                    var_instruct    := x"00000000";
+                else
+                    stall           <= '0';
+                    var_pc          := current_pc;
+                    var_instruct    := current_instruction;
+                end if;
+                
+                --assign signals for next stage
+                ctrl.pc             <= var_pc;
+                ctrl.instruction    <= var_instruct;
+                ctrl.instruct_type  <= instruct_type;
+                ctrl.alu_op         <= alu_op;
+                ctrl.write_reg_num  <= write_reg_num;
+                
+                --keep track of the instruction just decoded in case it is stalled
+                last_pc <= current_pc;
+                last_instruct <= current_instruction;
                 
             end if;
         end if;

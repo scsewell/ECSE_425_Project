@@ -19,6 +19,7 @@ architecture processor_arch of processor is
             reset       : in std_logic;
             clock       : in std_logic;
             dump        : in std_logic;
+            stall       : in std_logic;
             use_new_pc  : in std_logic;
             new_pc      : in std_logic_vector(31 downto 0);
             instruction : out std_logic_vector(31 downto 0);
@@ -59,10 +60,16 @@ architecture processor_arch of processor is
 			flush           : in std_logic;
             instruction     : in std_logic_vector(31 downto 0);
             pc              : in std_logic_vector(31 downto 0);
+            stall_in        : in std_logic;
+            ctrl_ex         : in CTRL_TYPE;
+            ctrl_mem        : in CTRL_TYPE;
+            ctrl_wb         : in CTRL_TYPE;
+            stall           : out std_logic;
             ctrl            : out CTRL_TYPE
         );
     end component;
     
+    signal stall    : std_logic;
     signal ctrl_ex  : CTRL_TYPE;
     
     --execution stage
@@ -120,6 +127,7 @@ begin
         reset => reset,
         clock => clock,
         dump => dump,
+        stall => stall,
         use_new_pc => use_new_pc,
         new_pc => new_pc,
         instruction => instruction,
@@ -145,8 +153,13 @@ begin
         reset => reset,
         clock => clock,
 		flush => use_new_pc,
-        instruction => instruction,
         pc => pc,
+        instruction => instruction,
+        stall_in => stall,
+        ctrl_ex => ctrl_ex,
+        ctrl_mem => ctrl_mem,
+        ctrl_wb => ctrl_wb,
+        stall => stall,
         ctrl => ctrl_ex
     );
     

@@ -73,7 +73,7 @@ begin
             --initizlize the output
             mem_read_data <= x"00000000";
             
-        elsif falling_edge(clock) then
+        elsif rising_edge(clock) then
             
             --if writing store the word at the current address
             if mem_write = '1' then

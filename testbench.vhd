@@ -45,9 +45,9 @@ begin
     begin
         --start the simulation with a reset
         reset <= '1';
-        wait for 4500 ps;
+        wait for 4250 ps;
         reset <= '0';
-        wait for 500 ps;
+        wait for 750 ps;
     
         --at the end of the simulation dump the memory
         wait for 9990 * clk_period;
