@@ -74,8 +74,9 @@ begin
     --main behaviors
     main_proc: process(clock)
         
-        variable entryIndex     : integer;
-        variable predictEntry   : std_logic_vector(61 downto 0);
+        variable incrementCounter   : std_logic;
+        variable entryIndex         : integer;
+        variable predictEntry       : std_logic_vector(61 downto 0);
         
         --Get aliases for accessing and setting parts of a prediction table entry
         alias entrySrcAddress   : std_logic_vector(29 downto 0) is predictEntry(29 downto 0);
@@ -98,68 +99,80 @@ begin
                 if (stall = '1') then
                     --do not increment pc
                     
-                elsif (use_new_pc = '1') then
-                    --load the new address
-                    current_pc <= new_pc;
-                    
-                    --access the entry in the branch prediction table associated with the branch instruction's address
-                    entryIndex      := to_integer(unsigned(new_pc_src_address(8 downto 2)));
-                    predictEntry    := predictTable(entryIndex);
-                    
-                    --now update the branch prediction table
-                    if (entrySrcAddress = new_pc_src_address(31 downto 2)) then
+                else
+                    incrementCounter := '1';
+                
+                    if (use_new_pc = '1') then
+                        --access the entry in the branch prediction table associated with the branch instruction's address
+                        entryIndex      := to_integer(unsigned(new_pc_src_address(8 downto 2)));
+                        predictEntry    := predictTable(entryIndex);
                         
-                        --The entry exists in the table, so check if the prediction was correct or not,
-                        --changing the conviction bit and prediction as appropriate.
-                        
-                        if (entryPrediction = new_pc(31 downto 2) and entryConviction = '0') then
-                            --The prediction was correct and weak, so the prediction is now strong
-                            entryConviction := '1';
+                        --now update or add the branch to the prediction table
+                        if (entrySrcAddress = new_pc_src_address(31 downto 2)) then
                             
-                        elsif (entryPrediction /= new_pc(31 downto 2) and entryConviction = '1') then
-                            --The prediction was wrong and strong, so the prediction is now weak
-                            entryConviction := '0';
+                            --load the new address if the prediction was wrong, otherwise increment the pc like usual
+                            if (entryPrediction /= new_pc(31 downto 2)) then
+                                current_pc <= new_pc;
+                                incrementCounter := '0';
+                            end if;
                             
-                        elsif (entryPrediction /= new_pc(31 downto 2) and entryConviction = '0') then
-                            --The prediction was wrong and weak, so change the prediction
-                            entryConviction := '0';
+                            --change the conviction bit and prediction as appropriate
+                            if (entryPrediction = new_pc(31 downto 2) and entryConviction = '0') then
+                                --The prediction was correct and weak, so the prediction is now strong
+                                entryConviction := '1';
+                                
+                            elsif (entryPrediction /= new_pc(31 downto 2) and entryConviction = '1') then
+                                --The prediction was wrong and strong, so the prediction is now weak
+                                entryConviction := '0';
+                                
+                            elsif (entryPrediction /= new_pc(31 downto 2) and entryConviction = '0') then
+                                --The prediction was wrong and weak, so change the prediction
+                                entryConviction := '0';
+                                entryPrediction := new_pc(31 downto 2);
+                                
+                            end if;
+                            
+                        else
+                            --load the new address if the default behavior was wrong, otherwise increment the pc like usual
+                            if (unsigned(current_pc(31 downto 2)) /= (unsigned(new_pc(31 downto 2)) + to_unsigned(4, 32))) then
+                                current_pc <= new_pc;
+                                incrementCounter := '0';
+                            end if;
+                            
+                            --The entry in the table was not for this branch, so we replace it as a weak prediction
+                            entrySrcAddress := new_pc_src_address(31 downto 2);
                             entryPrediction := new_pc(31 downto 2);
+                            entryConviction := '0';
+                            entryValid      := '1';
                             
                         end if;
                         
-                    else
-                        --The entry in the table was not for this branch, so we replace it as a weak prediction
-                        entrySrcAddress := new_pc_src_address(31 downto 2);
-                        entryPrediction := new_pc(31 downto 2);
-                        entryConviction := '0';
-                        entryValid      := '1';
-                        
+                        --update table entry
+                        predictTable(entryIndex) <= predictEntry;
                     end if;
                     
-                    --update table entry
-                    predictTable(entryIndex) <= predictEntry;
+                    --increment the counter to the next address and apply branch prediction
+                    if (incrementCounter = '1') then
+                        --access the entry in the branch prediction table associated with the last instruction's address
+                        entryIndex      := to_integer(unsigned(current_pc(8 downto 2)));
+                        predictEntry    := predictTable(entryIndex);
                     
-                else
-                    --access the entry in the branch prediction table associated with the last instruction's address
-                    entryIndex      := to_integer(unsigned(current_pc(8 downto 2)));
-                    predictEntry    := predictTable(entryIndex);
-                
-                    --check if the branch prediction table entry is valid for the last instruction
-                    if (entryValid = '1' and entrySrcAddress = current_pc(31 downto 2)) then
-                    
-                        --The entry contains a predicted branch address for the last instruction,
-                        --so load the predicted address.
-                        current_pc <= entryPrediction & "00";
+                        --check if the branch prediction table entry is valid for the last instruction
+                        if (entryValid = '1' and entrySrcAddress = current_pc(31 downto 2)) then
                         
-                    else
-                        --the last instruction was not a branch with a prediction in the table,
-                        --so increment the pc by 4 bytes by default.
-                        current_pc <= std_logic_vector(unsigned(current_pc) + to_unsigned(4, 32));
-                    
+                            --The entry contains a predicted branch address for the last instruction,
+                            --so load the predicted address.
+                            current_pc <= entryPrediction & "00";
+                            
+                        else
+                            --the last instruction was not a branch with a prediction in the table,
+                            --so increment the pc by 4 bytes by default.
+                            current_pc <= std_logic_vector(unsigned(current_pc) + to_unsigned(4, 32));
+                        
+                        end if;
                     end if;
                     
                 end if;
-            
             end if;
         end if;
     end process;

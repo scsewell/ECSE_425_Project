@@ -57,7 +57,6 @@ architecture processor_arch of processor is
         port (
             reset           : in std_logic;
             clock           : in std_logic;
-			flush           : in std_logic;
             instruction     : in std_logic_vector(31 downto 0);
             pc              : in std_logic_vector(31 downto 0);
             stall_in        : in std_logic;
@@ -81,7 +80,6 @@ architecture processor_arch of processor is
         port (
             reset               : in std_logic;
             clock               : in std_logic;
-			flush       	    : in std_logic;
             rs                  : in std_logic_vector(31 downto 0);
             rt                  : in std_logic_vector(31 downto 0);
             ctrl_in             : in CTRL_TYPE;
@@ -139,7 +137,6 @@ begin
     stage_id_inst: stage_id port map (
         reset => reset,
         clock => clock,
-		flush => use_new_pc,
         pc => pc,
         instruction => instruction,
         stall_in => stall,
@@ -172,7 +169,6 @@ begin
     stage_ex_inst: stage_ex port map (
         reset => reset,
         clock => clock,
-		flush => use_new_pc,
         rs => rs_value,
         rt => rt_value,
         ctrl_in => ctrl_ex,

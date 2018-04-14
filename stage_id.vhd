@@ -10,7 +10,6 @@ entity stage_id is
     port (
         reset           : in std_logic;
         clock           : in std_logic;
-        flush           : in std_logic;
         pc              : in std_logic_vector(31 downto 0);
         instruction     : in std_logic_vector(31 downto 0);
         stall_in        : in std_logic;
@@ -32,8 +31,8 @@ architecture stage_id_arch of stage_id is
 begin
 
     --main behaviors
-    main_proc: process(clock, reset, flush)
-    
+    main_proc: process(clock)
+        
         variable current_pc             : std_logic_vector(31 downto 0);
         variable current_instruction    : std_logic_vector(31 downto 0);
         
@@ -54,7 +53,7 @@ begin
         
     begin
         if falling_edge(clock) then
-            if (reset = '1' or flush = '1') then
+            if (reset = '1') then
                 
                 last_pc             <= x"00000000";
                 last_instruct       <= x"00000000";
