@@ -40,8 +40,8 @@ force -deposit clock 0 0 ns, 1 0.5 ns -repeat 1 ns
 ;# Add the waves
 AddWaves
 
-;# Run for 10,000 clock cycles as per project specification
-run 10000 ns
+;# Run for at least 10,000 clock cycles as per project specification
+run 10100 ns
 
 ;# Show to first few clock cycles in the window
 wave zoom range 0ns 20ns

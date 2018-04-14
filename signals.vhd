@@ -2,7 +2,7 @@ library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
---Defines types containing many related signals
+--Defines types used throughout the code.
 package signals is
     
     --enumeration defining supported alu operations

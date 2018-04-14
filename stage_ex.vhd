@@ -90,6 +90,8 @@ begin
                 new_pc_2        <= x"00000000";
                 
             else
+                --Ignore the current instruction if we just took a branch that leads to a
+                --different instruction than this one because we didn't predict correctly.
                 if ((use_new_pc_1 = '1' and (ctrl_in.pc /= new_pc_1 or use_branch_predict = '0')) or ctrl_in.instruct_type = i_no_op) then
                     alu_in0     <= x"00000000";
                     alu_in1     <= x"00000000";
@@ -109,6 +111,8 @@ begin
                     new_pc_1        <= new_pc_2;
                     
                 else
+                    --We keep track of the expected pc values for the upcoming instructions so we can discard the
+                    --instructions if the prediction was wrong, and instead wait for the correct instructions.
                     use_new_pc_2    <= '0';
                     new_pc_2        <= x"00000000";
                     use_new_pc_1    <= use_new_pc_2;
@@ -121,29 +125,35 @@ begin
                     var_new_pc      := x"00000000";
                     var_new_pc_src  := x"00000000";
                     
+                    --Set the inputs to the ALU depending on the instruction.
                     case ctrl_in.instruct_type is
                         when i_no_op|i_add|i_sub|i_mult|i_div|i_slt|i_and|i_or|i_nor|i_xor|i_mfhi|i_mflo =>
                             var_alu_in0     := rs;
                             var_alu_in1     := rt;
                             
                         when i_sll|i_srl|i_sra =>
+                            --rt and zero-extended shift amount
                             var_alu_in0     := rt;
                             var_alu_in1     := std_logic_vector(resize(unsigned(shamt), 32));
                             
-                        when i_andi|i_ori|i_xori => 
+                        when i_andi|i_ori|i_xori =>
+                            --rs and zero-extended immediate
                             var_alu_in0     := rs;
                             var_alu_in1     := std_logic_vector(resize(unsigned(immediate), 32));
                             
                         when i_addi|i_slti|i_lw =>
+                            --rs and sign-extended immediate
                             var_alu_in0     := rs;
                             var_alu_in1     := std_logic_vector(resize(signed(immediate), 32));
                             
                         when i_sw =>
+                            --rs and sign-extended immediate
                             var_alu_in0     := rs;
                             var_alu_in1     := std_logic_vector(resize(signed(immediate), 32));
-                            var_mem_write   := rt;
+                            var_mem_write   := rt; --rt is the value written to memory
                             
-                        when i_lui =>
+                        when i_lui => 
+                            --sign-extended immediate
                             var_alu_in0     := std_logic_vector(resize(signed(immediate), 32));
                             
                         when i_beq =>
@@ -151,8 +161,10 @@ begin
                             var_new_pc_src  := ctrl_in.pc;
                             
                             if (rs = rt) then
+                                --branch taken, new pc will be the current pc of the branch instruction and some offset
                                 var_new_pc  := std_logic_vector(to_unsigned(to_integer(unsigned(ctrl_in.pc)) + 4 + to_integer(signed(immediate & "00")), 32));
                             else
+                                --branch not taken, new pc will be the following address
                                 var_new_pc  := std_logic_vector(to_unsigned(to_integer(unsigned(ctrl_in.pc)) + 4, 32));
                             end if;
                             
@@ -166,8 +178,10 @@ begin
                             var_new_pc_src  := ctrl_in.pc;
                             
                             if (rs /= rt) then
+                                --branch taken, new pc will be the current pc of the branch instruction and some offset
                                 var_new_pc  := std_logic_vector(to_unsigned(to_integer(unsigned(ctrl_in.pc)) + 4 + to_integer(signed(immediate & "00")), 32));
                             else
+                                --branch not taken, new pc will be the following address
                                 var_new_pc  := std_logic_vector(to_unsigned(to_integer(unsigned(ctrl_in.pc)) + 4, 32));
                             end if;
                             
@@ -177,7 +191,8 @@ begin
                             new_pc_2        <= std_logic_vector(unsigned(var_new_pc) + to_unsigned(4, 32));
                             
                         when i_j|i_jal =>
-                            var_alu_in0     := ctrl_in.pc; --output = pc + 8
+                            --pc = pc + 8 for JAL
+                            var_alu_in0     := ctrl_in.pc;
                             var_alu_in1     := x"00000008";
                             
                             var_use_new_pc  := '1';
@@ -208,7 +223,7 @@ begin
                     new_pc                  <= var_new_pc;
                     new_pc_src_address      <= var_new_pc_src;
                     
-                    --pass along the control signals
+                    --pass the data and control signals along the pipeline
                     ctrl_out.pc                 <= ctrl_in.pc;
                     ctrl_out.instruction        <= ctrl_in.instruction;
                     ctrl_out.instruct_type      <= ctrl_in.instruct_type;

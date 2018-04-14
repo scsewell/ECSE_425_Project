@@ -3,6 +3,7 @@ use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 use work.signals.all;
 
+--Main component that links all the different parts of the processor together.
 entity processor is
     port (
         reset               : in std_logic;
@@ -13,7 +14,6 @@ entity processor is
 end processor;
 
 architecture processor_arch of processor is
-    
 
     --fetch stage
     component stage_if is

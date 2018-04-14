@@ -46,27 +46,31 @@ begin
     --Main simulation
     sim_process: process
     begin
-        --reset the processor and enable branch prediction
+        --Enable the branch prediction optimization.
         use_branch_predict <= '1';
+        
+        --Reset the processor.
         reset <= '1';
         wait for 1250 ps;
         reset <= '0';
         wait for 750 ps;
         
-        --wait for the program to finish execution
-        wait for 998 * clk_period;
+        --Run the processor for 10000 clock cycles, as per the project specification.
+        wait for 10000 * clk_period;
         
-        --reset the processor and disable branch prediction
+        --Run the program again with branch prediction disabled for comparison.
         use_branch_predict <= '0';
+        
+        --Reset the processor.
         reset <= '1';
         wait for 1250 ps;
         reset <= '0';
         wait for 750 ps;
         
-        --wait for the program to finish execution
-        wait for 998 * clk_period;
+        --Run the processor for 10000 clock cycles, as per the project specification.
+        wait for 10000 * clk_period;
         
-        --at the end of the simulation dump the memory and register files
+        --At the end of the simulation dump the memory and register files.
         dump <= '1';
         wait for clk_period;
         dump <= '0';

@@ -84,14 +84,14 @@ begin
                         write_mem_reg   <= '0';
                         
                     when i_add|i_sub|i_addi|i_slt|i_slti|i_and|i_or|i_nor|i_xor|i_andi|i_ori|i_xori|i_mfhi|i_mflo|i_lui|i_sll|i_srl|i_sra|i_jal =>
-                        --write the alu result to the target register
+                        --write the ALU result to the target register
                         write_reg_num   <= ctrl_in.write_reg_num;
                         write_alu_reg   <= '1';
                         write_alu_data  <= ctrl_in.alu_output;
                         write_mem_reg   <= '0';
                         
                     when i_lw =>
-                        --write the mem output to the target register
+                        --write retrieved memory value to the target register
                         write_reg_num   <= ctrl_in.write_reg_num;
                         write_alu_reg   <= '0';
                         write_alu_data  <= x"00000000";

@@ -1,7 +1,13 @@
 To use the processor, run the testbench.tcl file.
 The processor will load the program.txt file containing the program to run, assuming it is located in the same directory.
+That will reset the processor and run it for 10,000 cycles with the loaded program with branch prediction enabled.
+After running for the desired amount of cycles, it will reset the processor and run the program again with branch prediction disabled.
+You can look at the waveforms to view the important signals in the processor pipeline.
 
 After running the program, 3 files will be written to the directory:
 1) register_file.txt        Contains the register contents in accending order
 2) memory.txt               Contains the memory contents in accending order
 2) instructionMemory.txt    Contains the instruction memory contents in accending order
+
+This submission is vastly improved over that for PD4 (a lot of important bug fixes, hazard detection and whatnot is implemented as well).
+Most of the code needed for the branch prediction optimization is in stage_if.vhd, with a little in stage_ex.vhd.
