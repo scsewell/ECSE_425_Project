@@ -15,6 +15,7 @@ entity memory is
     port (
         reset           : in std_logic;
         clock           : in std_logic;
+        program         : in string;
         mem_dump        : in std_logic;
         mem_address     : in std_logic_vector(31 downto 0);
         mem_write       : in std_logic;
@@ -48,7 +49,7 @@ begin
                 --if this is instruction memory open the program file and read the instructions
                 if is_instruction then
                     --open the program file
-                    file_open(f_in, "program.txt", read_mode);
+                    file_open(f_in, program, read_mode);
                     
                     for i in 0 to ram_size-1 loop
                         --while there is a new line in the program load it into memory, otherwise initialize to 0

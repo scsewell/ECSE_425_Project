@@ -1,5 +1,6 @@
 proc AddWaves {} {
 	;#Add waves we're interested in to the Wave window
+    add wave -radix ascii -position end sim:/testbench/program_name
     add wave -position end sim:/testbench/clock
     add wave -position end sim:/testbench/reset
     add wave -position end sim:/testbench/dump

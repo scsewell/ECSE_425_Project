@@ -9,7 +9,8 @@ entity processor is
         reset               : in std_logic;
         clock               : in std_logic;
         dump                : in std_logic;
-        use_branch_predict  : in std_logic --if true enables branch prediction
+        use_branch_predict  : in std_logic; --if true enables branch prediction
+        program_name        : in string     --the program file to load
     );
 end processor;
 
@@ -21,6 +22,7 @@ architecture processor_arch of processor is
             reset               : in std_logic;
             clock               : in std_logic;
             dump                : in std_logic;
+            program             : in string;
             use_branch_predict  : in std_logic;
             stall               : in std_logic;
             ignore_stall        : in std_logic;
@@ -129,12 +131,13 @@ architecture processor_arch of processor is
     signal ctrl_wb          : CTRL_TYPE;
     
 begin
-
+    
     --instruction fetch stage
     stage_if_inst: stage_if port map (
         reset => reset,
         clock => clock,
         dump => dump,
+        program => program_name,
         use_branch_predict => use_branch_predict,
         stall => stall,
         ignore_stall => ignore_stall,

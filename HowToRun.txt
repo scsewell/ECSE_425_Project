@@ -4,18 +4,18 @@ That will reset the processor and run it for 10,000 cycles with the loaded progr
 After running for the desired amount of cycles, it will reset the processor and run the program again with branch prediction disabled.
 You can look at the waveforms to view the important signals in the processor pipeline as the program executes.
 
-There are 6 programs we used to test the processor and optimizations. To test these just rename the one you wish to run as program.txt.
+There are 6 programs we used to test the processor and optimizations.
+To select a program to run, assign the program_name signal in testbench.tcl. The program name must be 12 characters long.
 Below are the results we got from testing and comparing the optomized and unoptimized processor:
 The times were computed by measuing from the end of the reset to the last instruction's completion before the infinite loop.
 
 Program             Optimized Time (ns)     Unoptimized Time (ns)       Percent Improvement
 program1.txt               164                     181                         9.39%
 program2.txt               880                    1260                        30.16%
-program3.txt               1                        1                           100%
-program4.txt               1                        1                           100%
-program5.txt               1                        1                           100%
-program6.txt               1                        1                           100%
-
+program3.txt               312                     350                        10.86%
+program4.txt                48                      62                        21.21%
+program5.txt               251                     277                        10.36%
+program6.txt              1716                    1657                        -3.56%
 
 After running the program, 3 files will be written to the directory:
 1) register_file.txt        Contains the register contents in accending order

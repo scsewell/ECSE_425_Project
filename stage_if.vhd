@@ -10,6 +10,7 @@ entity stage_if is
         reset               : in std_logic;
         clock               : in std_logic;
         dump                : in std_logic;
+        program             : in string;
         use_branch_predict  : in std_logic;
         stall               : in std_logic;
         ignore_stall        : in std_logic;
@@ -32,6 +33,7 @@ architecture stage_if_arch of stage_if is
         port(
             reset           : in std_logic;
             clock           : in std_logic;
+            program         : in string;
             mem_dump        : in std_logic;
             mem_address     : in std_logic_vector(31 downto 0);
             mem_write       : in std_logic;
@@ -66,6 +68,7 @@ begin
     instruction_mem: memory generic map(true, 1024) port map (
         reset => reset,
         clock => clock,
+        program => program,
         mem_dump => dump,
         mem_address => current_pc,
         mem_write => '0',

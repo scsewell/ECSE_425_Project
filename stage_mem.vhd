@@ -30,6 +30,7 @@ architecture stage_mem_arch of stage_mem is
         port(
             reset           : in std_logic;
             clock           : in std_logic;
+            program         : in string;
             mem_dump        : in std_logic;
             mem_address     : in std_logic_vector(31 downto 0);
             mem_write       : in std_logic;
@@ -48,6 +49,7 @@ begin
     main_memory_inst: memory generic map(false, 8192) port map (
         reset => reset,
         clock => clock,
+        program => "None",
         mem_dump => dump,
         mem_address => ctrl_in.alu_output,
         mem_write => mem_write,

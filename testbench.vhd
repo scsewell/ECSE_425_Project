@@ -16,7 +16,8 @@ architecture testbench_arch of testbench is
             reset               : in std_logic;
             clock               : in std_logic;
             dump                : in std_logic;
-            use_branch_predict  : in std_logic
+            use_branch_predict  : in std_logic;
+            program_name        : in string
         );
     end component;
     
@@ -25,13 +26,15 @@ architecture testbench_arch of testbench is
     signal reset                : std_logic := '0';
     signal dump                 : std_logic := '0';
     signal use_branch_predict   : std_logic := '0';
+    signal program_name         : string(1 to 12) := "program1.txt";
     
 begin
     processor_instance: processor port map(
         clock => clock,
         reset => reset,
         dump => dump,
-        use_branch_predict => use_branch_predict
+        use_branch_predict => use_branch_predict,
+        program_name => program_name
     );
 
     --System clock
@@ -46,6 +49,9 @@ begin
     --Main simulation
     sim_process: process
     begin
+        --Set the program to run. The name must be 12 characters long.
+        program_name <= "program1.txt";
+        
         --Enable the branch prediction optimization.
         use_branch_predict <= '1';
         

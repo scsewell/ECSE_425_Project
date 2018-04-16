@@ -1,3 +1,4 @@
+# A moderately tight loop
 Begin:  addi  $2, $0, 200       # n = 200
         addi  $3, $0, 0         # i = 0
         addi  $4, $0, 400       # j = 400
