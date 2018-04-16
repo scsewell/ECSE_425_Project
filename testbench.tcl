@@ -5,7 +5,8 @@ proc AddWaves {} {
     add wave -position end sim:/testbench/dump
     add wave -radix unsigned -position end sim:/testbench/processor_instance/stage_if_inst/current_pc
     add wave -radix binary -position end sim:/testbench/processor_instance/stage_id_inst/instruction
-    add wave -position end sim:/testbench/processor_instance/stage_id_inst/stall
+    ;#add wave -position end sim:/testbench/processor_instance/stage_id_inst/stall
+    ;#add wave -position end sim:/testbench/processor_instance/stage_ex_inst/ignore_stall
     add wave -radix unsigned -position end sim:/testbench/processor_instance/stage_id_inst/ctrl
     add wave -radix unsigned -position end sim:/testbench/processor_instance/stage_ex_inst/ctrl_out
     add wave -radix unsigned -position end sim:/testbench/processor_instance/stage_mem_inst/ctrl_out
@@ -40,8 +41,8 @@ force -deposit clock 0 0 ns, 1 0.5 ns -repeat 1 ns
 ;# Add the waves
 AddWaves
 
-;# Run for at least 10,000 clock cycles as per project specification
-run 10100 ns
+;# Run long enough to complete two 10,000 clock cycle long programs
+run 20100 ns
 
 ;# Show to first few clock cycles in the window
 wave zoom range 0ns 20ns

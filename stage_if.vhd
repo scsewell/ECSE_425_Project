@@ -12,6 +12,7 @@ entity stage_if is
         dump                : in std_logic;
         use_branch_predict  : in std_logic;
         stall               : in std_logic;
+        ignore_stall        : in std_logic;
         use_new_pc          : in std_logic;
         new_pc              : in std_logic_vector(31 downto 0);
         new_pc_src_address  : in std_logic_vector(31 downto 0);
@@ -97,10 +98,8 @@ begin
                 current_pc <= x"00000000";
                 
             else
-                if (stall = '1') then
-                    --do not increment pc when stalling to avoid skipping instructions
-                    
-                elsif (use_branch_predict = '1') then
+                if (use_branch_predict = '1') then
+                
                     incrementCounter := '1';
                     
                     if (use_new_pc = '1') then
@@ -152,8 +151,8 @@ begin
                         predictTable(entryIndex) <= predictEntry;
                     end if;
                     
-                    --increment the counter to the next address and apply branch prediction
-                    if (incrementCounter = '1') then
+                    --increment the counter to the next address and apply branch prediction if not stalling
+                    if (incrementCounter = '1' and (stall /= '1' or ignore_stall = '1')) then
                         --access the entry in the branch prediction table associated with the last instruction's address
                         entryIndex      := to_integer(unsigned(current_pc(8 downto 2)));
                         predictEntry    := predictTable(entryIndex);
@@ -177,8 +176,10 @@ begin
                     --when branch prediction is disabled just to the obvious
                     if (use_new_pc = '1') then
                         current_pc <= new_pc;
-                    else
+                        
+                    elsif (stall /= '1' or ignore_stall = '1') then
                         current_pc <= std_logic_vector(unsigned(current_pc) + to_unsigned(4, 32));
+                        
                     end if;
                     
                 end if;

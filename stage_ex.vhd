@@ -15,6 +15,7 @@ entity stage_ex is
         use_new_pc          : out std_logic;
         new_pc              : out std_logic_vector(31 downto 0);
         new_pc_src_address  : out std_logic_vector(31 downto 0);
+        ignore_stall        : out std_logic;
         ctrl_out            : out CTRL_TYPE
     );
 end stage_ex;
@@ -88,6 +89,7 @@ begin
                 use_new_pc_2    <= '0';
                 new_pc_1        <= x"00000000";
                 new_pc_2        <= x"00000000";
+                ignore_stall    <= '0';
                 
             else
                 --Ignore the current instruction if we just took a branch that leads to a
@@ -97,6 +99,12 @@ begin
                     alu_in1     <= x"00000000";
                     use_new_pc  <= '0';
                     new_pc      <= x"00000000";
+                    
+                    if (use_new_pc_2 = '1' and (ctrl_in.pc /= new_pc_2 or use_branch_predict = '0')) then
+                        ignore_stall    <= '1';
+                    else
+                        ignore_stall    <= '0';
+                    end if;
                     
                     ctrl_out.pc                 <= x"00000000";
                     ctrl_out.instruction        <= x"00000000";
@@ -117,6 +125,7 @@ begin
                     new_pc_2        <= x"00000000";
                     use_new_pc_1    <= use_new_pc_2;
                     new_pc_1        <= new_pc_2;
+                    ignore_stall    <= '0';
                     
                     var_alu_in0     := x"00000000";
                     var_alu_in1     := x"00000000";

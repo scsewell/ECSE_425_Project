@@ -13,6 +13,9 @@ entity stage_id is
         pc              : in std_logic_vector(31 downto 0);
         instruction     : in std_logic_vector(31 downto 0);
         stall_in        : in std_logic;
+        ignore_stall    : in std_logic;
+        use_new_pc      : in std_logic;
+        new_pc          : in std_logic_vector(31 downto 0);
         ctrl_ex         : in CTRL_TYPE;
         ctrl_mem        : in CTRL_TYPE;
         ctrl_wb         : in CTRL_TYPE;
@@ -71,7 +74,7 @@ begin
                 
             else
                 --get the current instruction
-                if (stall_in = '1') then
+                if (stall_in = '1' and ignore_stall /= '1') then
                     current_pc          := last_pc;
                     current_instruction := last_instruct;
                 else 
@@ -296,19 +299,19 @@ begin
                 
                 --Check for hazards and stall if appropirate. If the registers holding
                 --required values are being modified by previous instructions, we must stall.
-                if (
+                if ((
                     (src_reg1 /= "00000" and (--is the first operand being set later in the pipeline?
                         src_reg1 = ctrl_ex.write_reg_num or
-                        src_reg1 = ctrl_mem.write_reg_num or
-                        src_reg1 = ctrl_wb.write_reg_num
+                        src_reg1 = ctrl_mem.write_reg_num
                     ))
                     or
                     (src_reg2 /= "00000" and (--is the second operand being set later in the pipeline?
                         src_reg2 = ctrl_ex.write_reg_num or
-                        src_reg2 = ctrl_mem.write_reg_num or
-                        src_reg2 = ctrl_wb.write_reg_num
+                        src_reg2 = ctrl_mem.write_reg_num
                     ))
-                    ) then
+                    --If the predicted branch was wrong we must not stall either on the instruction, since it will not execute
+                    ) and ignore_stall /= '1') then-- and (use_new_pc = '0' or current_pc = new_pc) and ignore_stall /= '1') then
+                    
                     stall           <= '1';
                     instruct_type   := i_no_op;
                     alu_op          := alu_add;

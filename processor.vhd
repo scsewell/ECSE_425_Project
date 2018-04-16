@@ -23,6 +23,7 @@ architecture processor_arch of processor is
             dump                : in std_logic;
             use_branch_predict  : in std_logic;
             stall               : in std_logic;
+            ignore_stall        : in std_logic;
             use_new_pc          : in std_logic;
             new_pc              : in std_logic_vector(31 downto 0);
             new_pc_src_address  : in std_logic_vector(31 downto 0);
@@ -63,6 +64,9 @@ architecture processor_arch of processor is
             instruction     : in std_logic_vector(31 downto 0);
             pc              : in std_logic_vector(31 downto 0);
             stall_in        : in std_logic;
+            ignore_stall    : in std_logic;
+            use_new_pc      : in std_logic;
+            new_pc          : in std_logic_vector(31 downto 0);
             ctrl_ex         : in CTRL_TYPE;
             ctrl_mem        : in CTRL_TYPE;
             ctrl_wb         : in CTRL_TYPE;
@@ -90,6 +94,7 @@ architecture processor_arch of processor is
             use_new_pc          : out std_logic;
             new_pc              : out std_logic_vector(31 downto 0);
             new_pc_src_address  : out std_logic_vector(31 downto 0);
+            ignore_stall        : out std_logic;
             ctrl_out            : out CTRL_TYPE
         );
     end component;
@@ -97,6 +102,7 @@ architecture processor_arch of processor is
     signal use_new_pc           : std_logic;
     signal new_pc               : std_logic_vector(31 downto 0);
     signal new_pc_src_address   : std_logic_vector(31 downto 0);
+    signal ignore_stall         : std_logic;
     signal ctrl_mem             : CTRL_TYPE;
     
     --memory/write back stage
@@ -131,6 +137,7 @@ begin
         dump => dump,
         use_branch_predict => use_branch_predict,
         stall => stall,
+        ignore_stall => ignore_stall,
         use_new_pc => use_new_pc,
         new_pc => new_pc,
         new_pc_src_address => new_pc_src_address,
@@ -145,6 +152,9 @@ begin
         pc => pc,
         instruction => instruction,
         stall_in => stall,
+        ignore_stall => ignore_stall,
+        use_new_pc => use_new_pc,
+        new_pc => new_pc,
         ctrl_ex => ctrl_ex,
         ctrl_mem => ctrl_mem,
         ctrl_wb => ctrl_wb,
@@ -181,6 +191,7 @@ begin
         use_new_pc => use_new_pc,
         new_pc_src_address => new_pc_src_address,
         new_pc => new_pc,
+        ignore_stall => ignore_stall,
         ctrl_out => ctrl_mem
     );
     
